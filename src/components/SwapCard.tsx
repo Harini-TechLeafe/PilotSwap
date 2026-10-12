@@ -2,10 +2,11 @@ import { formatUnits } from 'viem';
 import { ACTIVE_CHAIN } from '../config/chains';
 import { getConfigIssues } from '../config/contracts';
 import { useBalances } from '../hooks/useBalances';
+import { usePrices } from '../hooks/usePrices';
 import { useDeploymentCheck } from '../hooks/useDeploymentCheck';
 import { useSwap } from '../hooks/useSwap';
 import { METAMASK_MISSING, WRONG_NETWORK, useWallet } from '../hooks/useWallet';
-import { formatAmount, formatRate, sanitizeAmountInput } from '../lib/format';
+import { formatAmount, formatRate, formatUsd, sanitizeAmountInput } from '../lib/format';
 import { METAMASK_DOWNLOAD } from './ConnectWallet';
 import SlippageSettings from './SlippageSettings';
 import TokenSelector from './TokenSelector';
@@ -40,25 +41,8 @@ export default function SwapCard({ initialFromId, embedded = false, onSwapped }:
   const deployment = useDeploymentCheck();
   const issues = [...getConfigIssues(), ...deployment.problems];
 
-  // ── Not connected: boarding-gate panel ──────────────────────────────
-  if (!isConnected) {
-    return (
-      <section id="swap" className="glass rounded-3xl p-6 sm:p-8">
-        <h2 className="text-xl font-semibold">Swap</h2>
-        <p className="mt-2 text-sm text-slate-600">Connect your wallet to see your balances and get live quotes on {ACTIVE_CHAIN.name}.</p>
-        <button className="btn-primary mt-6" onClick={() => void connect()} disabled={isConnecting}>
-          {isConnecting ? <><Spinner /> Check your wallet…</> : 'Connect Wallet'}
-        </button>
-        {!isInstalled && (
-          <p role="alert" className="mt-4 rounded-xl border border-rose-400/30 bg-rose-400/5 p-3 text-sm text-rose-700">
-            {METAMASK_MISSING}{' '}
-            <a href={METAMASK_DOWNLOAD} target="_blank" rel="noopener noreferrer" className="font-medium text-horizon underline">Get MetaMask</a>
-          </p>
-        )}
-        <p className="mt-4 text-xs text-slate-500">PilotSwap never asks for your private key or seed phrase. Your wallet asks you to approve each action.</p>
-      </section>
-    );
-  }
+  // ── Market-price preview (works without a wallet) ───────────────────
+  const { prices } = usePrices();
 
   const { fromToken, toToken, quote, amount } = s;
   const fromBal = balances[fromToken.id] ?? 0n;
@@ -69,7 +53,18 @@ export default function SwapCard({ initialFromId, embedded = false, onSwapped }:
     : null;
   const impact = quote ? quote.priceImpactBps / 100 : 0;
   const impactTone = impact < 1 ? 'text-emerald-600' : impact < 3 ? 'text-horizon' : 'text-rose-600';
-  const overBalance = s.blocker?.startsWith('Insufficient');
+  const overBalance = isConnected && !!s.blocker?.startsWith('Insufficient');
+
+  // Market estimate from live CoinGecko prices, used until a wallet is connected.
+  const priceFrom = prices[fromToken.coingeckoId]?.usd;
+  const priceTo = prices[toToken.coingeckoId]?.usd;
+  const amountNum = Number(amount);
+  const marketRate = priceFrom && priceTo ? priceFrom / priceTo : null;
+  const marketOut = !ready && marketRate && amountNum > 0 ? amountNum * marketRate : null;
+  const marketOutText = marketOut !== null ? formatRate(marketOut) : '';
+  const fromUsd = priceFrom && amountNum > 0 ? formatUsd(amountNum * priceFrom) : null;
+  const toUsd = marketOut !== null && priceTo ? formatUsd(marketOut * priceTo) : quote && priceTo ? formatUsd(Number(formatUnits(quote.amountOut, toToken.decimals)) * priceTo) : null;
+  const shownOut = outText || marketOutText;
 
   return (
     <section id={embedded ? undefined : 'swap'} className={embedded ? '' : 'glass rounded-3xl p-4 sm:p-6'}>
@@ -93,7 +88,7 @@ export default function SwapCard({ initialFromId, embedded = false, onSwapped }:
         <div className="field">
           <div className="flex items-center justify-between text-sm text-slate-500">
             <label htmlFor="amount-in">From</label>
-            <span>Balance: {loading && !balances[fromToken.id] ? '…' : formatAmount(fromBal, fromToken.decimals, 4)}</span>
+            <span>Balance: {!isConnected ? '—' : loading && !balances[fromToken.id] ? '…' : formatAmount(fromBal, fromToken.decimals, 4)}</span>
           </div>
           <div className="mt-2 flex items-center gap-3">
             <input
@@ -101,9 +96,10 @@ export default function SwapCard({ initialFromId, embedded = false, onSwapped }:
               onChange={(e) => s.setAmount(sanitizeAmountInput(e.target.value))}
               className={`min-w-0 flex-1 bg-transparent font-display text-3xl font-semibold outline-none placeholder:text-slate-300 ${overBalance ? 'text-rose-600' : ''}`}
             />
-            <button type="button" onClick={s.setMax} className="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-horizon hover:bg-blue-100/70">MAX</button>
+            {isConnected && <button type="button" onClick={s.setMax} className="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-horizon hover:bg-blue-100/70">MAX</button>}
             <TokenSelector value={fromToken} onChange={s.setFromId} balances={balances} disabledIds={[toToken.id]} />
           </div>
+          <p className="mt-1 h-5 text-sm text-slate-500">{fromUsd ? `≈ ${fromUsd}` : ''}</p>
         </div>
 
         {/* FLIP */}
@@ -115,16 +111,23 @@ export default function SwapCard({ initialFromId, embedded = false, onSwapped }:
         <div className="field">
           <div className="flex items-center justify-between text-sm text-slate-500">
             <span>To (estimated)</span>
-            <span>Balance: {formatAmount(toBal, toToken.decimals, 4)}</span>
+            <span>Balance: {isConnected ? formatAmount(toBal, toToken.decimals, 4) : '—'}</span>
           </div>
           <div className="mt-2 flex items-center gap-3">
-            <output className={`min-w-0 flex-1 truncate font-display text-3xl font-semibold ${outText ? '' : 'text-slate-600'} ${s.quoting ? 'animate-pulse' : ''}`}>{outText || '0.0'}</output>
+            <output className={`min-w-0 flex-1 truncate font-display text-3xl font-semibold ${shownOut ? '' : 'text-slate-600'} ${s.quoting ? 'animate-pulse' : ''}`}>{shownOut || '0.0'}</output>
             <TokenSelector value={toToken} onChange={s.setToId} balances={balances} disabledIds={[fromToken.id]} />
           </div>
+          <p className="mt-1 h-5 text-sm text-slate-500">{toUsd ? `≈ ${toUsd}` : ''}</p>
         </div>
       </fieldset>
 
       {/* DETAILS */}
+      {!ready && marketRate && (
+        <dl className="mt-4 divide-y divide-blue-100 rounded-2xl border border-blue-100 px-4 py-2">
+          <Row label="Market rate" value={`1 ${fromToken.symbol} = ${formatRate(marketRate)} ${toToken.symbol}`} />
+          <Row label="Slippage tolerance" value={`${(s.slippageBps / 100).toFixed(2)}%`} />
+        </dl>
+      )}
       {quote && s.minReceived !== null && (
         <dl className="mt-4 divide-y divide-blue-100 rounded-2xl border border-blue-100 px-4 py-2">
           <Row label="Exchange rate" value={rate ? `1 ${fromToken.symbol} = ${formatRate(rate)} ${toToken.symbol}` : '–'} />
@@ -139,7 +142,20 @@ export default function SwapCard({ initialFromId, embedded = false, onSwapped }:
 
       {/* ACTION */}
       <div className="mt-4">
-        {isWrongNetwork ? (
+        {!isConnected ? (
+          <>
+            <button className="btn-primary" onClick={() => void connect()} disabled={isConnecting}>
+              {isConnecting ? <><Spinner /> Check your wallet…</> : 'Connect Wallet'}
+            </button>
+            {!isInstalled && (
+              <p role="alert" className="mt-3 rounded-xl border border-rose-400/30 bg-rose-400/5 p-3 text-sm text-rose-700">
+                {METAMASK_MISSING}{' '}
+                <a href={METAMASK_DOWNLOAD} target="_blank" rel="noopener noreferrer" className="font-medium text-horizon underline">Get MetaMask</a>
+              </p>
+            )}
+            <p className="mt-3 text-center text-xs text-slate-500">Prices are live market estimates. Connect a wallet for an exact on-chain quote.</p>
+          </>
+        ) : isWrongNetwork ? (
           <>
             <p role="alert" className="mb-3 rounded-xl border border-rose-400/30 bg-rose-400/5 p-3 text-sm text-rose-700">{WRONG_NETWORK} ({ACTIVE_CHAIN.name})</p>
             <button className="btn-primary" onClick={() => void switchNetwork()}>Switch Network</button>

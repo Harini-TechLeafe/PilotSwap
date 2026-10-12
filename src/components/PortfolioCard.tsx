@@ -5,6 +5,8 @@ import { usePortfolioHistory, type Point, type Range } from '../hooks/usePortfol
 import type { TokenPrice } from '../hooks/usePrices';
 import { useWallet } from '../hooks/useWallet';
 import { formatAmount, formatUsd } from '../lib/format';
+import type { TokenRef } from '../lib/tokenLogos';
+import TokenLogo from './TokenLogo';
 
 /**
  * Chart colours (validated for colour-blind separation in this order).
@@ -12,8 +14,18 @@ import { formatAmount, formatUsd } from '../lib/format';
  * Every colour is also paired with the token's name, so colour is never the only cue.
  */
 const SERIES: Record<string, string> = { ETH: '#2a78d6', WETH: '#e87ba4', USDC: '#1baf7a', DAI: '#4a3aa7', TBTC: '#eb6834' };
-const UP = '#059669';   // emerald-600
-const DOWN = '#e11d48'; // rose-600
+/**
+ * Real logos. These are testnet tokens, so each one shows the logo of the real asset it mirrors:
+ * ETH → Ethereum, WETH/USDC/DAI → their Ethereum mainnet contracts, tBTC → Bitcoin.
+ */
+const LOGO_REFS: Record<string, TokenRef> = {
+  ETH: { family: 'evm', chainId: 1, address: null },
+  WETH: { family: 'evm', chainId: 1, address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2' },
+  USDC: { family: 'evm', chainId: 1, address: '0xA0b86991c6218b36c1d19D4a2E9Eb0cE3606eB48' },
+  DAI: { family: 'evm', chainId: 1, address: '0x6B175474E89094C44Da98b954EedeAC495271d0F' },
+  TBTC: { family: 'bitcoin' },
+};
+const LINE = '#1550E8'; // brand blue for the chart line
 
 const RANGES: { id: Range; label: string; words: string }[] = [
   { id: '1', label: '24H', words: 'in the last 24 hours' },
@@ -28,7 +40,7 @@ interface Props {
 }
 
 export default function PortfolioCard({ balances, balancesLoading, prices }: Props) {
-  const { isConnected, isWrongNetwork, connect, switchNetwork } = useWallet();
+  const { isConnected, isWrongNetwork, switchNetwork } = useWallet();
   const ready = isConnected && !isWrongNetwork;
   const [range, setRange] = useState<Range>('7');
 
@@ -55,16 +67,16 @@ export default function PortfolioCard({ balances, balancesLoading, prices }: Pro
   const up = change >= 0;
   const rangeWords = RANGES.find((r) => r.id === range)!.words;
 
-  if (!isConnected || isWrongNetwork) {
+  // Not connected: show nothing at all (no placeholder card).
+  if (!isConnected) return null;
+
+  if (isWrongNetwork) {
     return (
       <Shell range={range} setRange={setRange} showRange={false}>
         <div className="flex flex-col items-start justify-between gap-4 p-6 sm:flex-row sm:items-center">
-          <div>
-            <p className="font-display text-4xl font-bold text-slate-300">$—</p>
-            <p className="mt-1 text-sm text-slate-500">{isWrongNetwork ? 'Switch to the supported network to see your total balance.' : 'Connect your wallet to see the total value of your tokens in US dollars.'}</p>
-          </div>
-          <button className="rounded-2xl bg-horizon px-5 py-3 font-display font-semibold text-white transition hover:brightness-110 focus-ring" onClick={() => void (isWrongNetwork ? switchNetwork() : connect())}>
-            {isWrongNetwork ? 'Switch Network' : 'Connect Wallet'}
+          <p className="text-sm text-slate-500">Switch to the supported network to see your total balance.</p>
+          <button className="rounded-2xl bg-horizon px-5 py-3 font-display font-semibold text-white transition hover:brightness-110 focus-ring" onClick={() => void switchNetwork()}>
+            Switch Network
           </button>
         </div>
       </Shell>
@@ -96,8 +108,9 @@ export default function PortfolioCard({ balances, balancesLoading, prices }: Pro
               const pct = total > 0 ? (usd / total) * 100 : 0;
               const empty = amount === 0n;
               return (
-                <li key={token.id} className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2.5 text-sm ${empty ? 'opacity-50' : ''}`}>
-                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: SERIES[token.id] ?? '#94a3b8' }} aria-hidden />
+                <li key={token.id} className={`grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-x-2.5 text-sm ${empty ? 'opacity-50' : ''}`}>
+                  <span className="h-6 w-1 rounded-full" style={{ background: SERIES[token.id] ?? '#94a3b8' }} aria-hidden />
+                  <TokenLogo token={LOGO_REFS[token.id] ?? { family: 'evm', chainId: -1, address: null }} symbol={token.symbol} name={token.name} size={28} />
                   <span className="min-w-0 truncate">
                     <span className="font-semibold text-cloud">{token.symbol}</span>{' '}
                     <span className="text-slate-500 tabular-nums">
@@ -127,7 +140,7 @@ export default function PortfolioCard({ balances, balancesLoading, prices }: Pro
             ) : points.length < 2 ? (
               <Empty text="Loading price history…" />
             ) : (
-              <ValueChart points={points} color={up ? UP : DOWN} range={range} start={start} />
+              <ValueChart points={points} color={LINE} range={range} start={start} />
             )}
           </div>
           <p className="mt-2 text-xs text-slate-500">
@@ -189,7 +202,7 @@ function AllocationBar({ rows, total }: { rows: { token: { id: string; symbol: s
 
 // ── Area chart with High/Low markers, a dashed "start" line, and a hover crosshair ──
 const H = 220;
-const PAD = { top: 26, right: 8, bottom: 26, left: 8 };
+const PAD = { top: 26, right: 12, bottom: 26, left: 56 };
 
 function fmtTime(t: number, range: Range): string {
   const d = new Date(t);
@@ -223,10 +236,19 @@ function ValueChart({ points, color, range, start }: { points: Point[]; color: s
     const yMin = lo - span * 0.12, yMax = hi + span * 0.12;
     const x = (t: number) => PAD.left + ((t - t0) / (t1 - t0 || 1)) * (w - PAD.left - PAD.right);
     const y = (v: number) => PAD.top + (1 - (v - yMin) / (yMax - yMin)) * (H - PAD.top - PAD.bottom);
-    const line = points.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)} ${y(p.v).toFixed(1)}`).join('');
+    // Smooth curve (Catmull-Rom → cubic Bézier) instead of a jagged polyline
+    const xy = points.map((p) => [x(p.t), y(p.v)] as const);
+    let line = `M${xy[0][0].toFixed(1)} ${xy[0][1].toFixed(1)}`;
+    for (let i = 0; i < xy.length - 1; i++) {
+      const p0 = xy[Math.max(0, i - 1)], p1 = xy[i], p2 = xy[i + 1], p3 = xy[Math.min(xy.length - 1, i + 2)];
+      const c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6;
+      const c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
+      line += `C${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+    }
+    const grid = [0, 1, 2, 3].map((k) => yMin + ((yMax - yMin) * (k + 0.5)) / 4);
     const area = `${line}L${x(t1).toFixed(1)} ${H - PAD.bottom}L${x(t0).toFixed(1)} ${H - PAD.bottom}Z`;
     const ticks = Array.from({ length: 4 }, (_, k) => t0 + ((t1 - t0) * (k + 0.5)) / 4);
-    return { x, y, line, area, iLo, iHi, ticks };
+    return { x, y, line, area, iLo, iHi, ticks, grid, span: yMax - yMin };
   }, [points, w]);
 
   const nearest = (clientX: number) => {
@@ -275,17 +297,26 @@ function ValueChart({ points, color, range, start }: { points: Point[]; color: s
       >
         <defs>
           <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={0.22} />
+            <stop offset="0%" stopColor={color} stopOpacity={0.28} />
             <stop offset="100%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
+        {/* horizontal grid with $ labels */}
+        {geo.grid.map((g) => (
+          <g key={g}>
+            <line x1={PAD.left} x2={w - PAD.right} y1={geo.y(g)} y2={geo.y(g)} stroke="#e2e8f0" strokeWidth={1} />
+            <text x={PAD.left - 8} y={geo.y(g) + 4} textAnchor="end" className="fill-slate-400 text-[10px] tabular-nums">
+              ${g.toLocaleString('en-US', { maximumFractionDigits: geo.span < 20 ? 2 : 0 })}
+            </text>
+          </g>
+        ))}
         {/* baseline + start reference */}
         <line x1={PAD.left} x2={w - PAD.right} y1={H - PAD.bottom} y2={H - PAD.bottom} stroke="#dbeafe" />
         <line x1={PAD.left} x2={w - PAD.right} y1={geo.y(start)} y2={geo.y(start)} stroke="#94a3b8" strokeDasharray="3 4" strokeWidth={1} />
         <text x={w - PAD.right} y={geo.y(start) - 5} textAnchor="end" className="fill-slate-400 text-[10px]">start {formatUsd(start)}</text>
 
         <path d={geo.area} fill={`url(#${gid})`} />
-        <path d={geo.line} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+        <path d={geo.line} fill="none" stroke={color} strokeWidth={2.75} strokeLinejoin="round" strokeLinecap="round" />
 
         {geo.iHi !== geo.iLo && label(geo.iHi, `High ${formatUsd(points[geo.iHi].v)}`, true)}
         {geo.iHi !== geo.iLo && label(geo.iLo, `Low ${formatUsd(points[geo.iLo].v)}`, false)}

@@ -226,7 +226,7 @@ export default function Liquidity() {
         {/* OVERVIEW */}
         <section className="glass mt-8 rounded-3xl p-5 sm:p-8" aria-label="Overview">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold">Overview</h2>
+            <h2 className="text-lg font-semibold">Pool Overview</h2>
             <div className="flex gap-1" role="tablist" aria-label="Time range">
               {(Object.keys(RANGES) as Range[]).map((r) => (
                 <button key={r} role="tab" aria-selected={range === r} onClick={() => setRange(r)}

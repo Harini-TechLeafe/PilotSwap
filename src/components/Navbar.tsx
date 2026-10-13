@@ -10,7 +10,7 @@ const LINKS = [
 ];
 
 export default function Navbar() {
-  const current = () => (window.location.hash === '#liquidity' || window.location.hash === '#tokens' ? window.location.hash : '#swap');
+  const current = () => (window.location.hash === '#liquidity' ? '#liquidity' : window.location.hash.startsWith('#tokens') ? '#tokens' : '#swap');
   const [active, setActive] = useState(current);
   useEffect(() => {
     const h = () => setActive(current());

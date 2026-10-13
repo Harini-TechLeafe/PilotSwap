@@ -22,7 +22,8 @@ export type TokenRef =
   | { family: 'evm'; chainId: number; address: string | null }
   | { family: 'solana'; mint: string | null }
   | { family: 'cardano'; policyId: string | null; assetNameHex?: string }
-  | { family: 'bitcoin' };
+  | { family: 'bitcoin' }
+  | { family: 'native'; folder: 'ripple' | 'doge' | 'tron' };
 
 const TRUST = 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains';
 const SOLANA_LIST = 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet';
@@ -53,6 +54,8 @@ export function tokenKey(ref: TokenRef): string | null {
     }
     case 'bitcoin':
       return 'bitcoin:native';
+    case 'native':
+      return `native:${ref.folder}`;
   }
 }
 
@@ -73,6 +76,8 @@ function candidates(ref: TokenRef): string[] {
       return ref.policyId === null ? [`${TRUST}/cardano/info/logo.png`] : [];
     case 'bitcoin':
       return [`${TRUST}/bitcoin/info/logo.png`];
+    case 'native':
+      return [`${TRUST}/${ref.folder}/info/logo.png`];
   }
 }
 

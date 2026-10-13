@@ -44,10 +44,15 @@ h1, h2, h3 { font-family: 'Sora', ui-sans-serif, system-ui, sans-serif; }
 }
 .flight-plane { animation: fly 1.8s ease-in-out infinite alternate; }
 
+/* Explore Tokens: scrolling price ticker */
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.ticker-track { animation: ticker 50s linear infinite; }
+.ticker:hover .ticker-track, .ticker:focus-within .ticker-track { animation-play-state: paused; }
+
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .toast-in { animation: toast-in 0.2s ease-out; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .flight-track, .flight-plane, .toast-in, .animate-spin, .animate-pulse { animation: none !important; }
+  .flight-track, .flight-plane, .ticker-track, .toast-in, .animate-spin, .animate-pulse { animation: none !important; }
 }

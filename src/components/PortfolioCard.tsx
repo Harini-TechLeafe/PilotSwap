@@ -204,18 +204,21 @@ function AllocationBar({ rows, total }: { rows: { token: { id: string; symbol: s
 const H = 220;
 const PAD = { top: 26, right: 12, bottom: 26, left: 56 };
 
-function fmtTime(t: number, range: Range): string {
+function fmtTime(t: number, range: Range | 'live'): string {
   const d = new Date(t);
+  if (range === 'live') return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit' });
   return range === '1'
     ? d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
     : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + (range === '7' ? `, ${d.toLocaleTimeString(undefined, { hour: 'numeric' })}` : '');
 }
-function fmtTick(t: number, range: Range): string {
+function fmtTick(t: number, range: Range | 'live'): string {
   const d = new Date(t);
+  if (range === 'live') return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
   return range === '1' ? d.toLocaleTimeString(undefined, { hour: 'numeric' }) : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-function ValueChart({ points, color, range, start }: { points: Point[]; color: string; range: Range; start: number }) {
+/** Also used by the Explore Tokens page: pass `fmt` / `gridFmt` to show prices with more decimals than whole dollars. */
+export function ValueChart({ points, color, range, start, fmt = formatUsd, gridFmt }: { points: Point[]; color: string; range: Range | 'live'; start: number; fmt?: (n: number) => string; gridFmt?: (n: number, span: number) => string }) {
   const wrap = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(600);
   const [hover, setHover] = useState<number | null>(null);
@@ -288,7 +291,7 @@ function ValueChart({ points, color, range, start }: { points: Point[]; color: s
         className="block touch-none outline-none focus-visible:ring-2 focus-visible:ring-altitude rounded-lg"
         tabIndex={0}
         role="img"
-        aria-label={`Balance chart: from ${formatUsd(start)} to ${formatUsd(points[points.length - 1].v)}. Use left and right arrow keys to read values.`}
+        aria-label={`Balance chart: from ${fmt(start)} to ${fmt(points[points.length - 1].v)}. Use left and right arrow keys to read values.`}
         onPointerMove={onMove}
         onPointerDown={onMove}
         onPointerLeave={() => setHover(null)}
@@ -306,20 +309,20 @@ function ValueChart({ points, color, range, start }: { points: Point[]; color: s
           <g key={g}>
             <line x1={PAD.left} x2={w - PAD.right} y1={geo.y(g)} y2={geo.y(g)} stroke="#e2e8f0" strokeWidth={1} />
             <text x={PAD.left - 8} y={geo.y(g) + 4} textAnchor="end" className="fill-slate-400 text-[10px] tabular-nums">
-              ${g.toLocaleString('en-US', { maximumFractionDigits: geo.span < 20 ? 2 : 0 })}
+              {gridFmt ? gridFmt(g, geo.span) : `$${g.toLocaleString('en-US', { maximumFractionDigits: geo.span < 20 ? 2 : 0 })}`}
             </text>
           </g>
         ))}
         {/* baseline + start reference */}
         <line x1={PAD.left} x2={w - PAD.right} y1={H - PAD.bottom} y2={H - PAD.bottom} stroke="#dbeafe" />
         <line x1={PAD.left} x2={w - PAD.right} y1={geo.y(start)} y2={geo.y(start)} stroke="#94a3b8" strokeDasharray="3 4" strokeWidth={1} />
-        <text x={w - PAD.right} y={geo.y(start) - 5} textAnchor="end" className="fill-slate-400 text-[10px]">start {formatUsd(start)}</text>
+        <text x={w - PAD.right} y={geo.y(start) - 5} textAnchor="end" className="fill-slate-400 text-[10px]">start {fmt(start)}</text>
 
         <path d={geo.area} fill={`url(#${gid})`} />
         <path d={geo.line} fill="none" stroke={color} strokeWidth={2.75} strokeLinejoin="round" strokeLinecap="round" />
 
-        {geo.iHi !== geo.iLo && label(geo.iHi, `High ${formatUsd(points[geo.iHi].v)}`, true)}
-        {geo.iHi !== geo.iLo && label(geo.iLo, `Low ${formatUsd(points[geo.iLo].v)}`, false)}
+        {geo.iHi !== geo.iLo && label(geo.iHi, `High ${fmt(points[geo.iHi].v)}`, true)}
+        {geo.iHi !== geo.iLo && label(geo.iLo, `Low ${fmt(points[geo.iLo].v)}`, false)}
         {/* "now" dot */}
         <circle cx={geo.x(points[points.length - 1].t)} cy={geo.y(points[points.length - 1].v)} r={4.5} fill={color} stroke="#fff" strokeWidth={2} />
 
@@ -340,9 +343,9 @@ function ValueChart({ points, color, range, start }: { points: Point[]; color: s
           className="pointer-events-none absolute top-0 z-10 rounded-xl border border-blue-100 bg-white px-3 py-2 text-sm shadow-lg shadow-blue-900/10"
           style={{ left: Math.min(Math.max(geo.x(hp.t) - 80, 0), w - 160), width: 160 }}
         >
-          <p className="font-display text-base font-bold tabular-nums text-cloud">{formatUsd(hp.v)}</p>
+          <p className="font-display text-base font-bold tabular-nums text-cloud">{fmt(hp.v)}</p>
           <p className={`text-xs font-medium tabular-nums ${hp.v >= start ? 'text-emerald-700' : 'text-rose-700'}`}>
-            {hp.v >= start ? '▲ +' : '▼ −'}{formatUsd(Math.abs(hp.v - start))} vs start
+            {hp.v >= start ? '▲ +' : '▼ −'}{fmt(Math.abs(hp.v - start))} vs start
           </p>
           <p className="mt-0.5 text-xs text-slate-500">{hover === points.length - 1 ? 'Now' : fmtTime(hp.t, range)}</p>
         </div>

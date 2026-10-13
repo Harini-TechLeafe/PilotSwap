@@ -5,26 +5,26 @@ import WalletPicker from './components/WalletPicker';
 import { ChainProvider } from './chains/ChainContext';
 import Home from './pages/Home';
 import Liquidity from './pages/Liquidity';
+import Tokens from './pages/Tokens';
 
-/** Tiny hash router: "#liquidity" shows the Liquidity page, everything else shows Home. */
-function useIsLiquidity() {
-  const get = () => window.location.hash === '#liquidity';
-  const [on, setOn] = useState(get);
+/** Tiny hash router: "#liquidity" = Liquidity, "#tokens" / "#tokens/usdc" = Explore Tokens, everything else = Home. */
+function useHash() {
+  const [hash, setHash] = useState(() => window.location.hash);
   useEffect(() => {
-    const h = () => { setOn(get()); window.scrollTo({ top: 0 }); };
+    const h = () => { setHash(window.location.hash); window.scrollTo({ top: 0 }); };
     window.addEventListener('hashchange', h);
     return () => window.removeEventListener('hashchange', h);
   }, []);
-  return on;
+  return hash;
 }
 
 export default function App() {
-  const liquidity = useIsLiquidity();
+  const hash = useHash();
   return (
     <ToastProvider>
       <ChainProvider>
         <WalletProvider>
-          {liquidity ? <Liquidity /> : <Home />}
+          {hash === '#liquidity' ? <Liquidity /> : hash.startsWith('#tokens') ? <Tokens hash={hash} /> : <Home />}
           <WalletPicker />
         </WalletProvider>
       </ChainProvider>

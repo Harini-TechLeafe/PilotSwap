@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import LiquidityPairLogo, { type PairToken } from '../components/LiquidityPairLogo';
 import type { TokenRef } from '../lib/tokenLogos';
 import { useWallet } from '../hooks/useWallet';
+import { AddLiquidityButton, AddLiquidityDrawer, WalletRequiredModal } from '../components/AddLiquidity';
 
 /* ──────────────────────────────────────────────────────────────────────────
  *  Liquidity page: pool overview + all pools across EVM and non-EVM chains.
@@ -140,7 +141,11 @@ const COLS: { key: SortKey; label: string }[] = [
 ];
 
 export default function Liquidity() {
-  const { isConnected, connect, isConnecting } = useWallet();
+  const { isConnected, connect, isConnecting, activeSolana, activeBitcoin } = useWallet();
+  const anyWalletConnected = isConnected || !!activeSolana || !!activeBitcoin;
+  const [gateOpen, setGateOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const onAddLiquidity = () => (anyWalletConnected ? setDrawerOpen(true) : setGateOpen(true));
   const [range, setRange] = useState<Range>('1W');
   const [metric, setMetric] = useState<Metric>('volume');
   const [hover, setHover] = useState<number | null>(null);
@@ -218,9 +223,12 @@ export default function Liquidity() {
     <div id="top">
       <Navbar />
       <main className="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6">
-        <header>
-          <h1 className="text-4xl font-bold tracking-tight">Liquidity</h1>
-          <p className="mt-1 text-slate-500">Earn yield from pools across EVM and non-EVM chains</p>
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight">Liquidity</h1>
+            <p className="mt-1 text-slate-500">Earn yield from pools across EVM and non-EVM chains</p>
+          </div>
+          <AddLiquidityButton onClick={onAddLiquidity} />
         </header>
 
         {/* OVERVIEW */}
@@ -388,6 +396,9 @@ export default function Liquidity() {
         </div>
         <p className="mt-4 text-xs text-slate-500">Demo data for layout. Cardano pools are shown in ₳, other chains in $. Overview totals are in USD.</p>
       </main>
+
+      {gateOpen && <WalletRequiredModal onClose={() => setGateOpen(false)} />}
+      {drawerOpen && <AddLiquidityDrawer onClose={() => setDrawerOpen(false)} />}
 
       <footer className="border-t border-blue-100/70 py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 text-sm text-slate-500 sm:flex-row sm:px-6">

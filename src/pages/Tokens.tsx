@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { formatUnits } from 'viem';
 import { ValueChart } from '../components/PortfolioCard';
 import ChainComingSoon from '../components/ChainComingSoon';
+import BitcoinSwapCard from '../components/BitcoinSwapCard';
 import Logo from '../components/Logo';
 import Navbar from '../components/Navbar';
 import PriceTicker from '../components/PriceTicker';
@@ -275,14 +276,9 @@ function TokenDetail({ token, quote, marketLoading, balances, balancesLoading, r
         {/* RIGHT: the same swap box as the home page */}
         <div className="min-w-0">
           {!evm ? (
-            <ChainComingSoon chain={chain} />
+            chain.family === 'bitcoin' ? <BitcoinSwapCard key={token.slug} initialFromSymbol={token.symbol} /> : <ChainComingSoon chain={chain} />
           ) : (
             <>
-              {!token.tokenId && (
-                <p className="mb-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-3.5 text-sm text-slate-600">
-                  {token.symbol} is not available on {ACTIVE_CHAIN.name} yet, so it cannot be swapped here. You can still swap the tokens below.
-                </p>
-              )}
               <SwapCard key={token.slug} initialFromId={token.tokenId} onSwapped={() => void refreshBalances()} />
             </>
           )}
@@ -318,8 +314,7 @@ function BalanceCard({ token, quote, balances, loading }: { token: ExploreToken;
   let action: ReactNode = null;
 
   if (!own) {
-    main = '—';
-    sub = `${token.symbol} is not on ${ACTIVE_CHAIN.name}, so there is no balance to show.`;
+    main = `0 ${token.symbol}`;
   } else if (!isConnected) {
     main = '—';
     sub = 'Connect your wallet to see your balance';
@@ -329,8 +324,7 @@ function BalanceCard({ token, quote, balances, loading }: { token: ExploreToken;
     sub = `Switch to ${ACTIVE_CHAIN.name} to see your balance`;
     action = <button type="button" onClick={() => void switchNetwork()} className="rounded-xl bg-white px-4 py-2 font-display text-sm font-semibold text-horizon transition hover:bg-blue-50 focus-ring">Switch Network</button>;
   } else if (!configured) {
-    main = '—';
-    sub = `Add the ${own.symbol} contract address to your .env file to read this balance.`;
+    main = `0 ${own.symbol}`;
   } else if (bal === undefined) {
     main = loading ? 'Loading…' : '—';
   } else {

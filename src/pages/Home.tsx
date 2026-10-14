@@ -2,6 +2,7 @@ import Logo from '../components/Logo';
 import Navbar from '../components/Navbar';
 import SwapCard from '../components/SwapCard';
 import ChainComingSoon from '../components/ChainComingSoon';
+import BitcoinSwapCard from '../components/BitcoinSwapCard';
 import { useChain } from '../chains/ChainContext';
 import { ACTIVE_CHAIN } from '../config/chains';
 import PortfolioCard from '../components/PortfolioCard';
@@ -39,7 +40,7 @@ export default function Home() {
               <path d="M468 22 478 30 466 36z" fill="currentColor" />
             </svg>
           </div>
-          {chain.family === 'evm' ? <SwapCard /> : <ChainComingSoon chain={chain} />}
+          {chain.family === 'evm' ? <SwapCard /> : chain.family === 'bitcoin' ? <BitcoinSwapCard /> : <ChainComingSoon chain={chain} />}
         </div>
 
         {/* TOTAL BALANCE */}

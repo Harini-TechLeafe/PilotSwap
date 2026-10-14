@@ -3,7 +3,6 @@ import { useChain } from '../chains/ChainContext';
 import { CHAINS } from '../chains/registry';
 import { ACTIVE_CHAIN, SUPPORTED_CHAINS, chainName } from '../config/chains';
 import { useWallet } from '../hooks/useWallet';
-import { shortAddress } from '../lib/format';
 import type { TokenRef } from '../lib/tokenLogos';
 import TokenLogo from './TokenLogo';
 
@@ -17,6 +16,8 @@ interface Item {
   testnet: boolean;
   current: boolean;
   disabled?: boolean;
+  /** true = network the app is actually used with for swaps (listed first, full colour) */
+  used: boolean;
   onSelect?: () => void;
 }
 
@@ -29,6 +30,9 @@ const FAMILY_LOGO: Record<string, TokenRef> = {
   bitcoin: { family: 'bitcoin' },
 };
 
+/** Non-EVM networks used for swaps. Add an id from chains/registry.ts here to move a network to the top. */
+const USED_CHAIN_IDS = ['bitcoin', 'solana'];
+
 const NetworkIcon = ({ item, size = 32 }: { item: Pick<Item, 'badge' | 'logo' | 'name'>; size?: number }) => (
   <TokenLogo token={item.logo} symbol={item.badge} name={item.name} alt={`${item.name} logo`} size={size} />
 );
@@ -40,7 +44,7 @@ const NetworkIcon = ({ item, size = 32 }: { item: Pick<Item, 'badge' | 'logo' | 
  */
 export default function ChainSelector() {
   const { chain, setChainId } = useChain();
-  const { account, chainId, isConnected, switchNetwork } = useWallet();
+  const { chainId, isConnected, switchNetwork } = useWallet();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -68,7 +72,8 @@ export default function ChainSelector() {
       name: c?.name ?? chainName(id),
       badge: 'ETH',
       logo: evmLogo(id),
-      sub: usingEvmId === id && account ? shortAddress(account) : isActiveConfig ? 'Used for swaps' : c ? 'Set VITE_CHAIN_ID to use' : 'Not supported for swaps',
+      sub: isActiveConfig ? 'Used for swaps' : 'Coming soon',
+      used: isActiveConfig,
       testnet: !!c?.testnet,
       current: usingEvmId === id,
       disabled: !isActiveConfig,
@@ -88,15 +93,17 @@ export default function ChainSelector() {
       name: c.name,
       badge: c.badge,
       logo: FAMILY_LOGO[c.family] ?? { family: 'evm', chainId: -1, address: null },
-      sub: c.supported ? 'Live' : 'Coming soon',
+      sub: USED_CHAIN_IDS.includes(c.id) ? 'Used for swaps' : 'Coming soon',
+      used: USED_CHAIN_IDS.includes(c.id),
       testnet: /devnet|testnet|preprod|sepolia/i.test(c.name),
       current: !evmSelected && chain.id === c.id,
       onSelect: () => { setChainId(c.id); setOpen(false); },
     });
   }
 
-  // Current network first, everything else keeps its order
-  const ordered = [...items.filter((i) => i.current), ...items.filter((i) => !i.current)];
+  // Networks used for swaps go on top (Bitcoin, Sepolia, Solana), everything else follows below.
+  const rank = (i: Item) => (i.key === 'bitcoin' ? 0 : i.key.startsWith('evm-') ? 1 : 2);
+  const ordered = [...items.filter((i) => i.used).sort((a, b) => rank(a) - rank(b)), ...items.filter((i) => !i.used)];
   const current = ordered.find((i) => i.current) ?? null;
 
   return (
@@ -120,7 +127,7 @@ export default function ChainSelector() {
                   aria-checked={i.current}
                   disabled={i.disabled && !i.current}
                   onClick={i.onSelect}
-                  className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition focus-ring disabled:cursor-not-allowed disabled:opacity-55 ${i.current ? 'bg-blue-100/70' : 'hover:bg-blue-50'}`}
+                  className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition focus-ring disabled:cursor-not-allowed disabled:opacity-55 ${i.current ? 'bg-blue-100/70' : 'hover:bg-blue-50'} ${i.used ? '' : 'opacity-55'}`}
                 >
                   <NetworkIcon item={i} />
                   <span className="min-w-0 flex-1">

@@ -142,7 +142,7 @@ export default function TokenModal({ token, balances, balancesLoading, refreshBa
                 <button className="btn-primary" onClick={() => void switchNetwork()}>Switch Network</button>
               </div>
             ) : !configured ? (
-              <p className="text-sm text-slate-600">{token.symbol} has no contract address configured yet. Add it to your <code className="rounded bg-blue-100/70 px-1">.env</code> file first.</p>
+              <p className="text-sm text-slate-600">Sending {token.symbol} is not available yet.</p>
             ) : tab === 'send' ? (
               <SendPanel key={token.id} token={token} account={account!} walletClient={walletClient} balances={balances} refreshBalances={refreshBalances} prices={prices} />
             ) : tab === 'receive' ? (

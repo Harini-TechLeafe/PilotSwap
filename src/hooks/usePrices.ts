@@ -11,7 +11,7 @@ export interface TokenPrice {
 type PriceMap = Record<string, TokenPrice>; // keyed by CoinGecko id
 
 const REFRESH_MS = 60_000;
-const IDS = [...new Set(TOKENS.map((t) => t.coingeckoId))].join(',');
+const IDS = [...new Set([...TOKENS.map((t) => t.coingeckoId), 'bitcoin', 'ethereum', 'usd-coin', 'tether', 'solana'])].join(',');
 const PRICE_URL = `https://api.coingecko.com/api/v3/simple/price?ids=${IDS}&vs_currencies=usd&include_24hr_change=true`;
 
 /** Live USD prices from CoinGecko for every token in TOKENS. Refreshes every 60 s. */

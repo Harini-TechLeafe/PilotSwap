@@ -29,5 +29,4 @@ export const CHAINS: ChainEntry[] = [
   { id: 'evm', name: 'Ethereum Sepolia', family: 'evm', badge: 'ETH', supported: true, note: 'Uniswap V2 router' },
   { id: 'solana', name: 'Solana Devnet', family: 'solana', badge: 'SOL', supported: false, note: 'Needs a Solana adapter (wallet-adapter + Jupiter/Raydium)' },
   { id: 'cardano', name: 'Cardano Preprod', family: 'cardano', badge: 'ADA', supported: false, note: 'Needs a Cardano adapter (CIP-30 + Minswap SDK)' },
-  { id: 'bitcoin', name: 'Bitcoin Testnet', family: 'bitcoin', badge: 'BTC', supported: false, note: 'No native swaps on Bitcoin; needs a bridge or wrapped BTC' },
-];
+{ id: 'bitcoin', name: 'Bitcoin Testnet', family: 'bitcoin', badge: 'BTC', supported: false, note: 'Bitcoin has no smart contracts; swaps will use a bridge or wrapped BTC (tBTC)' },];

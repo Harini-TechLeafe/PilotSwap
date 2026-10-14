@@ -60,7 +60,7 @@ export default function SwapCard({ initialFromId, embedded = false, onSwapped }:
   const priceTo = prices[toToken.coingeckoId]?.usd;
   const amountNum = Number(amount);
   const marketRate = priceFrom && priceTo ? priceFrom / priceTo : null;
-  const marketOut = !ready && marketRate && amountNum > 0 ? amountNum * marketRate : null;
+  const marketOut = !quote && marketRate && amountNum > 0 ? amountNum * marketRate : null;
   const marketOutText = marketOut !== null ? formatRate(marketOut) : '';
   const fromUsd = priceFrom && amountNum > 0 ? formatUsd(amountNum * priceFrom) : null;
   const toUsd = marketOut !== null && priceTo ? formatUsd(marketOut * priceTo) : quote && priceTo ? formatUsd(Number(formatUnits(quote.amountOut, toToken.decimals)) * priceTo) : null;
@@ -73,7 +73,7 @@ export default function SwapCard({ initialFromId, embedded = false, onSwapped }:
         <SlippageSettings valueBps={s.slippageBps} onChange={s.setSlippageBps} disabled={s.busy} />
       </div>
 
-      {issues.length > 0 && (
+      {/* {issues.length > 0 && (
         <div role="alert" className="mb-4 rounded-2xl border border-horizon/30 bg-horizon/5 p-3.5 text-sm text-slate-700">
           <p className="font-medium text-horizon">Configuration incomplete</p>
           <ul className="mt-1 list-disc space-y-0.5 pl-5 text-slate-600">
@@ -81,7 +81,7 @@ export default function SwapCard({ initialFromId, embedded = false, onSwapped }:
           </ul>
           <p className="mt-1.5 text-xs text-slate-500">Fill in your .env file and restart the dev server. Swaps stay disabled until the router is configured.</p>
         </div>
-      )}
+      )} */}
 
       <fieldset disabled={isWrongNetwork || s.busy} className="m-0 min-w-0 border-0 p-0">
         {/* FROM */}
@@ -122,7 +122,7 @@ export default function SwapCard({ initialFromId, embedded = false, onSwapped }:
       </fieldset>
 
       {/* DETAILS */}
-      {!ready && marketRate && (
+      {!quote && marketRate && (
         <dl className="mt-4 divide-y divide-blue-100 rounded-2xl border border-blue-100 px-4 py-2">
           <Row label="Market rate" value={`1 ${fromToken.symbol} = ${formatRate(marketRate)} ${toToken.symbol}`} />
           <Row label="Slippage tolerance" value={`${(s.slippageBps / 100).toFixed(2)}%`} />

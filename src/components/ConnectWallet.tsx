@@ -97,7 +97,7 @@ export default function ConnectWallet() {
         <span aria-hidden className={`text-xs transition ${open ? 'rotate-180' : ''}`}>▾</span>
       </button>
       {open && (
-        <div role="menu" className="glass absolute right-0 top-12 z-50 w-[min(92vw,22rem)] rounded-2xl p-2 text-sm">
+        <div role="menu" className="absolute right-0 top-12 z-50 w-[min(92vw,22rem)] rounded-2xl border border-slate-200 bg-white p-2 text-sm shadow-2xl shadow-slate-900/15">
           <div className="mb-1 flex items-center gap-2.5 px-2.5 pb-2 pt-1.5">
             {selectedWallet?.info.icon && <img src={selectedWallet.info.icon} alt="" width={28} height={28} className="h-7 w-7 rounded-lg" />}
             <div className="min-w-0">
@@ -163,7 +163,7 @@ export default function ConnectWallet() {
           </p>
           <div className="mt-1 border-t border-blue-100 pt-1">
             <button className="w-full rounded-lg px-3 py-2 text-left text-rose-600 hover:bg-blue-100/70" onClick={() => { void disconnect(); setOpen(false); }}>
-              Disconnect
+              Disconnect from PilotSwap
             </button>
           </div>
         </div>

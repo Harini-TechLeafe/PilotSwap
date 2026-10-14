@@ -3,7 +3,6 @@ import { useChain } from '../chains/ChainContext';
 import { CHAINS } from '../chains/registry';
 import { ACTIVE_CHAIN, SUPPORTED_CHAINS, chainName } from '../config/chains';
 import { useWallet } from '../hooks/useWallet';
-import { shortAddress } from '../lib/format';
 import type { TokenRef } from '../lib/tokenLogos';
 import TokenLogo from './TokenLogo';
 
@@ -16,6 +15,8 @@ interface Item {
   sub: string;
   current: boolean;
   disabled?: boolean;
+  /** true = network the app is actually used with for swaps (listed first, full colour) */
+  used: boolean;
   onSelect?: () => void;
 }
 
@@ -28,6 +29,9 @@ const FAMILY_LOGO: Record<string, TokenRef> = {
   bitcoin: { family: 'bitcoin' },
 };
 
+/** Non-EVM networks used for swaps. Add an id from chains/registry.ts here to move a network to the top. */
+const USED_CHAIN_IDS = ['bitcoin', 'solana'];
+
 const NetworkIcon = ({ item, size = 32 }: { item: Pick<Item, 'badge' | 'logo' | 'name'>; size?: number }) => (
   <TokenLogo token={item.logo} symbol={item.badge} name={item.name} alt={`${item.name} logo`} size={size} />
 );
@@ -39,7 +43,7 @@ const NetworkIcon = ({ item, size = 32 }: { item: Pick<Item, 'badge' | 'logo' | 
  */
 export default function ChainSelector() {
   const { chain, setChainId } = useChain();
-  const { account, chainId, isConnected, switchNetwork } = useWallet();
+  const { chainId, isConnected, switchNetwork } = useWallet();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -67,7 +71,8 @@ export default function ChainSelector() {
       name: c?.name ?? chainName(id),
       badge: 'ETH',
       logo: evmLogo(id),
-      sub: usingEvmId === id && account ? shortAddress(account) : isActiveConfig ? 'Used for swaps' : c ? 'Set VITE_CHAIN_ID to use' : 'Not supported for swaps',
+      sub: isActiveConfig ? 'Used for swaps' : 'Coming soon',
+      used: isActiveConfig,
       current: usingEvmId === id,
       disabled: !isActiveConfig,
       onSelect: () => {
@@ -86,14 +91,18 @@ export default function ChainSelector() {
       name: c.name,
       badge: c.badge,
       logo: FAMILY_LOGO[c.family] ?? { family: 'evm', chainId: -1, address: null },
-      sub: c.supported ? 'Live' : 'Coming soon',
+      sub: USED_CHAIN_IDS.includes(c.id) ? 'Used for swaps' : 'Coming soon',
+      used: USED_CHAIN_IDS.includes(c.id),
       current: !evmSelected && chain.id === c.id,
       onSelect: () => { setChainId(c.id); setOpen(false); },
     });
   }
 
-  // Current network first, everything else keeps its order
-  const ordered = [...items.filter((i) => i.current), ...items.filter((i) => !i.current)];
+  // Networks used for swaps go on top, everything else ("Coming soon") follows below in a lighter style.
+  // Order of the "Used for swaps" networks at the top: Bitcoin, Solana, then Ethereum (Sepolia).
+  const TOP_ORDER = ['bitcoin', 'solana', 'evm'];
+  const rank = (i: Item) => TOP_ORDER.indexOf(i.key.startsWith('evm-') ? 'evm' : i.key);
+  const ordered = [...items.filter((i) => i.used).sort((a, b) => rank(a) - rank(b)), ...items.filter((i) => !i.used)];
   const current = ordered.find((i) => i.current) ?? null;
 
   return (
@@ -120,10 +129,12 @@ export default function ChainSelector() {
                   onClick={i.onSelect}
                   className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition focus-ring disabled:cursor-not-allowed ${i.current ? 'bg-slate-100' : 'hover:bg-slate-50'}`}
                 >
-                  <NetworkIcon item={i} />
+                  {/* "Coming soon" networks get a faded logo so the used ones stand out */}
+                  <span className={`shrink-0 ${i.used || i.current ? '' : 'opacity-50'}`}><NetworkIcon item={i} /></span>
                   <span className="min-w-0 flex-1">
-                    <span className={`block truncate font-semibold ${i.current ? 'text-black' : 'text-slate-500'}`}>{i.name}</span>
-                    <span className={`block truncate font-mono text-[11px] ${i.current ? 'text-slate-700' : 'text-slate-400'}`}>{i.sub}</span>
+                    {/* Selected = black. Used for swaps = dark grey. Coming soon = light grey. */}
+                    <span className={`block truncate font-semibold ${i.current ? 'text-black' : i.used ? 'text-slate-800' : 'text-slate-400'}`}>{i.name}</span>
+                    <span className={`block truncate font-mono text-[11px] ${i.current ? 'text-slate-700' : i.used ? 'text-slate-500' : 'text-slate-300'}`}>{i.sub}</span>
                   </span>
                   {i.current && <span aria-label="In use" className="text-emerald-600">✓</span>}
                 </button>

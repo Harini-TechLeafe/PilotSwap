@@ -1,4 +1,3 @@
-import Logo from '../components/Logo';
 import Navbar from '../components/Navbar';
 import SwapCard from '../components/SwapCard';
 import ChainComingSoon from '../components/ChainComingSoon';
@@ -45,13 +44,6 @@ export default function Home() {
         {/* TOTAL BALANCE */}
         <PortfolioCard balances={showBalances ? balances : {}} balancesLoading={loading} prices={prices} />
       </main>
-
-      <footer className="border-t border-blue-100/70 py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 text-sm text-slate-500 sm:flex-row sm:px-6">
-          <Logo />
-          <p>Testnet software. Do not use real funds.</p>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { formatUnits } from 'viem';
 import { ValueChart } from '../components/PortfolioCard';
 import ChainComingSoon from '../components/ChainComingSoon';
-import Logo from '../components/Logo';
 import Navbar from '../components/Navbar';
 import PriceTicker from '../components/PriceTicker';
 import Sparkline from '../components/Sparkline';
@@ -91,13 +90,6 @@ export default function Tokens({ hash }: { hash: string }) {
           </>
         )}
       </main>
-
-      <footer className="border-t border-blue-100/70 py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 text-sm text-slate-500 sm:flex-row sm:px-6">
-          <Logo />
-          <p>Testnet software. Do not use real funds.</p>
-        </div>
-      </footer>
     </div>
   );
 }

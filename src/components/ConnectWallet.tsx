@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ACTIVE_CHAIN, chainName } from '../config/chains';
+import { ACTIVE_CHAIN } from '../config/chains';
 import { METAMASK_MISSING, useWallet, type NonEvmFamily } from '../hooks/useWallet';
 import { shortAddress } from '../lib/format';
 
@@ -7,7 +7,7 @@ export const METAMASK_DOWNLOAD = 'https://metamask.io/download/';
 
 export default function ConnectWallet() {
   const {
-    account, chainId, isConnecting, isWrongNetwork, connect, disconnect, isInstalled,
+    account, isConnecting, connect, disconnect, isInstalled, selectedWallet,
     evmAccounts, solanaAccounts, bitcoinAccounts, activeSolana, activeBitcoin,
     solanaAvailable, bitcoinAvailable, connectingFamily, isSwitching, connectFamily, switchAccount,
   } = useWallet();
@@ -32,6 +32,20 @@ export default function ConnectWallet() {
     { id: 'solana', label: 'Solana', badge: 'SOL', badgeClass: 'bg-emerald-400/15 text-emerald-600', list: solanaAccounts, active: activeSolana, available: solanaAvailable },
     { id: 'bitcoin', label: 'Bitcoin', badge: 'BTC', badgeClass: 'bg-horizon/20 text-horizon', list: bitcoinAccounts, active: activeBitcoin, available: bitcoinAvailable },
   ];
+  /*
+   * Wallets never tell websites their own account names, so we number the accounts in the order the
+   * wallet shared them with PilotSwap and keep that order stable when you switch (Account 1, Account 2, ...).
+   */
+  const seenOrder = useRef<string[]>([]);
+  for (const a of evmAccounts) {
+    const k = a.toLowerCase();
+    if (!seenOrder.current.includes(k)) seenOrder.current.push(k);
+  }
+  const accountLabel = (addr: string) => {
+    const i = seenOrder.current.indexOf(addr.toLowerCase());
+    return `Account ${i === -1 ? 1 : i + 1}`;
+  };
+
   const [open, setOpen] = useState(false);
   const [showMissing, setShowMissing] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -66,19 +80,32 @@ export default function ConnectWallet() {
 
   return (
     <div className="relative flex items-center gap-2" ref={ref}>
-      <span
-        className={`hidden items-center gap-2 rounded-xl border px-3 py-2 text-sm sm:inline-flex ${isWrongNetwork ? 'border-rose-400/40 text-rose-700' : 'border-blue-100 text-slate-700'}`}
-        title={isWrongNetwork ? `Expected ${ACTIVE_CHAIN.name}` : undefined}
+      {/* Connected wallet: wallet logo + account name (like "MetaMask · Account 1") */}
+      <button
+        className="flex items-center gap-2 rounded-xl bg-horizon py-2 pl-2 pr-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:brightness-110 focus-ring"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        title={`${selectedWallet?.info.name ?? 'Wallet'} · ${account}`}
       >
-        <span className={`h-2 w-2 rounded-full ${isWrongNetwork ? 'bg-rose-400' : 'bg-emerald-400'}`} />
-        {chainId ? chainName(chainId) : 'Unknown network'}
-      </span>
-      <button className="btn-ghost focus-ring font-mono" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-haspopup="menu">
-        {shortAddress(account)}
+        {selectedWallet?.info.icon ? (
+          <img src={selectedWallet.info.icon} alt={`${selectedWallet.info.name} logo`} width={24} height={24} className="h-6 w-6 rounded-md bg-white/90 p-0.5" />
+        ) : (
+          <span aria-hidden className="flex h-6 w-6 items-center justify-center rounded-md bg-white/20 text-xs">👛</span>
+        )}
+        <span>{accountLabel(account)}</span>
+        <span aria-hidden className={`text-xs transition ${open ? 'rotate-180' : ''}`}>▾</span>
       </button>
       {open && (
         <div role="menu" className="glass absolute right-0 top-12 z-50 w-[min(92vw,22rem)] rounded-2xl p-2 text-sm">
-          <p className="px-2.5 pb-1.5 pt-1 text-xs uppercase tracking-wider text-slate-500">Your addresses</p>
+          <div className="mb-1 flex items-center gap-2.5 px-2.5 pb-2 pt-1.5">
+            {selectedWallet?.info.icon && <img src={selectedWallet.info.icon} alt="" width={28} height={28} className="h-7 w-7 rounded-lg" />}
+            <div className="min-w-0">
+              <p className="font-semibold text-slate-900">{selectedWallet?.info.name ?? 'Wallet'} · {accountLabel(account)}</p>
+              <p className="truncate font-mono text-xs text-slate-500">{shortAddress(account)}</p>
+            </div>
+          </div>
+          <p className="px-2.5 pb-1.5 text-xs uppercase tracking-wider text-slate-500">Your addresses</p>
 
           {sections.map((sec) => (
             <div key={sec.id} className="mb-1 rounded-xl bg-blue-50 p-1.5">
@@ -101,7 +128,8 @@ export default function ConnectWallet() {
                         onClick={() => { if (!isActive) void switchAccount(sec.id, addr); }}
                       >
                         <span className={`h-2 w-2 shrink-0 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-blue-200'}`} />
-                        <span className="truncate font-mono text-slate-800">{shortAddress(addr)}</span>
+                        {sec.id === 'evm' && <span className="shrink-0 font-medium text-slate-800">{accountLabel(addr)}</span>}
+                        <span className={`truncate font-mono ${sec.id === 'evm' ? 'text-xs text-slate-500' : 'text-slate-800'}`}>{shortAddress(addr)}</span>
                         {isActive && <span className="ml-auto text-[11px] text-emerald-600">Active</span>}
                       </button>
                       <button

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Logo from '../components/Logo';
 import Navbar from '../components/Navbar';
 import LiquidityPairLogo, { type PairToken } from '../components/LiquidityPairLogo';
 import type { TokenRef } from '../lib/tokenLogos';
@@ -394,18 +393,11 @@ export default function Liquidity() {
             )}
           </div>
         </div>
-        <p className="mt-4 text-xs text-slate-500">Demo data for layout. Cardano pools are shown in ₳, other chains in $. Overview totals are in USD.</p>
+        
       </main>
 
       {gateOpen && <WalletRequiredModal onClose={() => setGateOpen(false)} />}
       {drawerOpen && <AddLiquidityDrawer onClose={() => setDrawerOpen(false)} />}
-
-      <footer className="border-t border-blue-100/70 py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 text-sm text-slate-500 sm:flex-row sm:px-6">
-          <Logo />
-          <p>Testnet software. Do not use real funds.</p>
-        </div>
-      </footer>
     </div>
   );
 }

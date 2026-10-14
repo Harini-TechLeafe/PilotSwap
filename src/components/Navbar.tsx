@@ -19,7 +19,7 @@ export default function Navbar() {
   }, []);
 
   const linkClass = (href: string) =>
-    `rounded-xl px-3.5 py-2 text-sm font-medium transition focus-ring ${
+    `rounded-xl px-4 py-2 text-base font-medium transition focus-ring ${
       active === href ? 'bg-blue-100/80 text-cloud' : 'text-slate-600 hover:bg-blue-50 hover:text-cloud'
     }`;
 
@@ -31,7 +31,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-blue-100/70 bg-night/70 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+      <div className="flex h-20 w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6 lg:gap-10">
           <Logo />
           <nav className="hidden items-center gap-1 sm:flex" aria-label="Primary">

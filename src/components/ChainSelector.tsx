@@ -14,7 +14,6 @@ interface Item {
   /** Network identity used to load the real network logo. */
   logo: TokenRef;
   sub: string;
-  testnet: boolean;
   current: boolean;
   disabled?: boolean;
   onSelect?: () => void;
@@ -69,7 +68,6 @@ export default function ChainSelector() {
       badge: 'ETH',
       logo: evmLogo(id),
       sub: usingEvmId === id && account ? shortAddress(account) : isActiveConfig ? 'Used for swaps' : c ? 'Set VITE_CHAIN_ID to use' : 'Not supported for swaps',
-      testnet: !!c?.testnet,
       current: usingEvmId === id,
       disabled: !isActiveConfig,
       onSelect: () => {
@@ -89,7 +87,6 @@ export default function ChainSelector() {
       badge: c.badge,
       logo: FAMILY_LOGO[c.family] ?? { family: 'evm', chainId: -1, address: null },
       sub: c.supported ? 'Live' : 'Coming soon',
-      testnet: /devnet|testnet|preprod|sepolia/i.test(c.name),
       current: !evmSelected && chain.id === c.id,
       onSelect: () => { setChainId(c.id); setOpen(false); },
     });
@@ -108,9 +105,10 @@ export default function ChainSelector() {
       </button>
 
       {open && (
-        <div role="menu" className="glass absolute right-0 top-12 z-50 w-[min(92vw,22rem)] rounded-2xl p-3 text-sm">
-          <p className="px-1 font-display text-base font-semibold">Select network</p>
-          <p className="px-1 pb-2 text-xs text-slate-500">Choose a blockchain network for your wallet.</p>
+        /* Solid white panel (no see-through blur) so the page behind never shows through the text. */
+        <div role="menu" className="absolute right-0 top-12 z-50 w-[min(92vw,22rem)] rounded-2xl border border-slate-200 bg-white p-3 text-sm shadow-2xl shadow-slate-900/15">
+          <p className="px-1 font-display text-base font-semibold text-slate-900">Select network</p>
+          <p className="px-1 pb-2 text-xs text-slate-600">Choose a blockchain network for your wallet.</p>
 
           <ul className="space-y-1">
             {ordered.map((i) => (
@@ -120,28 +118,18 @@ export default function ChainSelector() {
                   aria-checked={i.current}
                   disabled={i.disabled && !i.current}
                   onClick={i.onSelect}
-                  className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition focus-ring disabled:cursor-not-allowed disabled:opacity-55 ${i.current ? 'bg-blue-100/70' : 'hover:bg-blue-50'}`}
+                  className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition focus-ring disabled:cursor-not-allowed ${i.current ? 'bg-slate-100' : 'hover:bg-slate-50'}`}
                 >
                   <NetworkIcon item={i} />
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2">
-                      <span className="truncate font-semibold text-cloud">{i.name}</span>
-                      {i.testnet && <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-horizon">Testnet</span>}
-                    </span>
-                    <span className="block truncate font-mono text-[11px] text-slate-500">{i.sub}</span>
+                    <span className={`block truncate font-semibold ${i.current ? 'text-black' : 'text-slate-500'}`}>{i.name}</span>
+                    <span className={`block truncate font-mono text-[11px] ${i.current ? 'text-slate-700' : 'text-slate-400'}`}>{i.sub}</span>
                   </span>
                   {i.current && <span aria-label="In use" className="text-emerald-600">✓</span>}
                 </button>
               </li>
             ))}
           </ul>
-
-          {!isConnected && (
-            <p className="mt-2 rounded-xl bg-blue-50 px-3 py-2 text-xs text-slate-600">Connect a wallet to see the network you are using.</p>
-          )}
-          <p className="mt-2 rounded-xl bg-blue-50 px-3 py-2 text-xs leading-relaxed text-slate-500">
-            The network in use is listed first. To change an EVM network, switch it inside your wallet and it appears here automatically.
-          </p>
         </div>
       )}
     </div>

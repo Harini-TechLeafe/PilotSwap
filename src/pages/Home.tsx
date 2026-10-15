@@ -21,11 +21,12 @@ export default function Home() {
       <Navbar />
       <main className="mx-auto max-w-6xl px-4 sm:px-6">
         {/* HERO */}
-        <div className="grid items-start gap-8 pb-10 pt-8 sm:gap-10 sm:pt-12 lg:grid-cols-[1.1fr_0.9fr] lg:pb-12 lg:pt-20">
+        <div className="grid items-start gap-8 pb-10 pt-6 sm:gap-10 sm:pt-8 lg:grid-cols-[1.1fr_0.9fr] lg:pb-12 lg:pt-6">
           <div className="lg:pt-8">
             <h1 className="text-4xl font-bold leading-[1.05] tracking-tight min-[400px]:text-5xl sm:text-6xl">
-              Swap Tokens.<br />
-              <span className="text-altitude">Fly Decentralized.</span>
+              Swap Tokens.<br /> 
+              <span className="text-altitude">Fly </span> <br />
+                            <span className="text-altitude"> Decentralized.</span>
             </h1>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <a href="/" onClick={(e) => { e.preventDefault(); document.getElementById('swap')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} className="rounded-2xl bg-horizon px-6 py-3.5 font-display font-semibold text-white transition hover:brightness-110 focus-ring">Start Swapping</a>

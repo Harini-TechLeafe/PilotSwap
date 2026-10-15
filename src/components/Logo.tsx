@@ -12,7 +12,7 @@ export default function Logo({ className = '' }: { className?: string }) {
         alt=""
         width={798}
         height={582}
-        className="h-14 w-auto drop-shadow-[0_4px_10px_rgba(37,99,235,0.25)] sm:h-[4.5rem] lg:h-20"
+        className="h-12 w-auto drop-shadow-[0_4px_10px_rgba(37,99,235,0.25)] sm:h-16 lg:h-[4.5rem]"
         draggable={false}
       />
       <span className="hidden font-display text-lg font-semibold tracking-tight text-cloud min-[420px]:inline sm:text-xl">PilotSwap</span>

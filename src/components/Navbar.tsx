@@ -30,7 +30,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-blue-100/70 bg-night/70 backdrop-blur-xl">
-      <div className="flex h-[4.5rem] w-full items-center justify-between gap-2 px-3 sm:h-24 sm:gap-4 sm:px-6 lg:px-8">
+      <div className="flex h-16 w-full items-center justify-between gap-2 px-3 sm:h-20 sm:gap-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6 lg:gap-10">
           <Logo />
           <nav className="hidden items-center gap-1 sm:flex" aria-label="Primary">

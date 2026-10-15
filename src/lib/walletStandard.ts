@@ -65,9 +65,14 @@ export const getStdWallets = (): readonly StdWallet[] => wallets;
 
 /** The wallet-standard entry with this name (e.g. "MetaMask") that supports the chain family. */
 export function findStdWallet(family: 'solana' | 'bitcoin', walletName: string | null): StdWallet | null {
-  if (!walletName) return null;
-  const n = walletName.toLowerCase();
-  return wallets.find((w) => w.name.toLowerCase().includes(n) && w.chains.some((c) => c.startsWith(`${family}:`))) ?? null;
+  const hasFamily = (w: StdWallet) => w.chains.some((c) => c.startsWith(`${family}:`));
+  const n = walletName?.toLowerCase() ?? '';
+  // 1) The same wallet as the connected Ethereum wallet (MetaMask -> MetaMask's Bitcoin account).
+  const same = n ? wallets.find((w) => w.name.toLowerCase().includes(n) && hasFamily(w)) : undefined;
+  if (same) return same;
+  // 2) Bitcoin only: a Bitcoin-only wallet (e.g. Superhero) has no Ethereum account, so use any wallet that offers Bitcoin.
+  if (family === 'bitcoin') return wallets.find(hasFamily) ?? null;
+  return null;
 }
 
 export const accountsForFamily = (w: StdWallet | null, family: 'solana' | 'bitcoin'): string[] =>

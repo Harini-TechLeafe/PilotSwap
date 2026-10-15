@@ -32,7 +32,7 @@ const BTC_TOKENS: BtcToken[] = [
 const byId = (id: string) => BTC_TOKENS.find((t) => t.id === id) ?? BTC_TOKENS[0];
 
 /** BTC balance of an address from mempool.space. Testnet addresses (tb1/m/n/2) use the testnet API. Returns BTC or null. */
-async function fetchBtcBalance(address: string, signal: AbortSignal): Promise<number | null> {
+export async function fetchBtcBalance(address: string, signal: AbortSignal): Promise<number | null> {
   const testnet = /^(tb1|[mn2])/i.test(address);
   try {
     const res = await fetch(`https://mempool.space/${testnet ? 'testnet/' : ''}api/address/${encodeURIComponent(address)}`, { signal });

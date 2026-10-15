@@ -1,13 +1,63 @@
-import { Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
-import {
-  TOKEN_PROGRAM_ID,
-  createAssociatedTokenAccountIdempotentInstruction,
-  createTransferCheckedInstruction,
-  getAssociatedTokenAddressSync,
-} from '@solana/spl-token';
+// @ts-ignore -- allow builds when the package's type declarations are unavailable.
+import { Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { Buffer } from 'buffer';
 import { ENV } from '../config/env';
 import { KNOWN_SOL_TOKENS } from '../config/solanaTokens';
 import type { SolWallet } from './solanaWallets';
+
+const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+
+function getAssociatedTokenAddressSync(mint: PublicKey, owner: PublicKey): PublicKey {
+  return PublicKey.findProgramAddressSync(
+    [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+  )[0];
+}
+
+function createAssociatedTokenAccountIdempotentInstruction(
+  payer: PublicKey,
+  associatedToken: PublicKey,
+  owner: PublicKey,
+  mint: PublicKey,
+): TransactionInstruction {
+  return new TransactionInstruction({
+    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+    keys: [
+      { pubkey: payer, isSigner: true, isWritable: true },
+      { pubkey: associatedToken, isSigner: false, isWritable: true },
+      { pubkey: owner, isSigner: false, isWritable: false },
+      { pubkey: mint, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    ],
+    data: Buffer.from([1]),
+  });
+}
+
+function createTransferCheckedInstruction(
+  source: PublicKey,
+  mint: PublicKey,
+  destination: PublicKey,
+  owner: PublicKey,
+  amount: bigint,
+  decimals: number,
+): TransactionInstruction {
+  const data = new Uint8Array(10);
+  data[0] = 12;
+  for (let i = 0; i < 8; i++) data[i + 1] = Number((amount >> BigInt(i * 8)) & 0xffn);
+  data[9] = decimals;
+  return new TransactionInstruction({
+    programId: TOKEN_PROGRAM_ID,
+    keys: [
+      { pubkey: source, isSigner: false, isWritable: true },
+      { pubkey: mint, isSigner: false, isWritable: false },
+      { pubkey: destination, isSigner: false, isWritable: true },
+      { pubkey: owner, isSigner: true, isWritable: false },
+    ],
+    data: Buffer.from(data),
+  });
+}
 
 export const connection = new Connection(ENV.solanaRpcUrl, 'confirmed');
 export const SOL_DECIMALS = 9;
@@ -106,7 +156,7 @@ export async function sendSpl(
   const toPk = new PublicKey(to);
   const mintPk = new PublicKey(mint);
   const src = getAssociatedTokenAddressSync(mintPk, fromPk);
-  const dst = getAssociatedTokenAddressSync(mintPk, toPk, true);
+  const dst = getAssociatedTokenAddressSync(mintPk, toPk);
   const tx = new Transaction().add(
     createAssociatedTokenAccountIdempotentInstruction(fromPk, dst, toPk, mintPk),
     createTransferCheckedInstruction(src, mintPk, dst, fromPk, amount, decimals),

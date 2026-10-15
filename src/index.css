@@ -95,3 +95,48 @@ h1, h2, h3 { font-family: 'Sora', ui-sans-serif, system-ui, sans-serif; }
   html { scroll-behavior: auto; }
   .flight-track, .flight-plane, .ticker-track, .toast-in, .drawer-in, .animate-spin, .animate-pulse { animation: none !important; }
 }
+
+/* ==========================================
+   PILOTSWAP MOBILE BOTTOM NAVIGATION
+========================================== */
+
+@media (max-width: 1023px) {
+  body {
+    padding-bottom: calc(
+      4.75rem + env(safe-area-inset-bottom)
+    );
+  }
+}
+/* ==========================================
+   PILOTSWAP MOBILE BOTTOM NAVIGATION
+========================================== */
+
+@media (max-width: 1023px) {
+  body {
+    padding-bottom: calc(
+      4.75rem + env(safe-area-inset-bottom)
+    );
+  }
+}
+/* ==========================================
+   PILOTSWAP - HIDE SCROLLBAR
+   KEEP SCROLLING FUNCTIONAL
+========================================== */
+
+/* Chrome, Edge, Safari */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* Firefox */
+html,
+body {
+  scrollbar-width: none;
+}
+
+/* Internet Explorer / Legacy Edge */
+html,
+body {
+  -ms-overflow-style: none;
+}

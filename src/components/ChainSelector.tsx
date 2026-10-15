@@ -37,7 +37,7 @@ const NetworkIcon = ({ item, size = 32 }: { item: Pick<Item, 'badge' | 'logo' | 
 );
 
 /**
- * Network button. Shows "Network" until something is in use; then shows the network name.
+ * Network button. Shows the name of the selected network (Sepolia, Solana, Bitcoin, ...).
  * The list is ordered: 1) the network you are using now, 2) EVM networks added in
  * config/chains.ts (SUPPORTED_CHAINS), 3) other chains added in chains/registry.ts.
  */
@@ -56,7 +56,9 @@ export default function ChainSelector() {
   }, []);
 
   const evmSelected = chain.family === 'evm';
-  const usingEvmId = evmSelected && isConnected && chainId !== null ? chainId : null;
+  // Ethereum (Sepolia) selected: show the wallet's chain when connected, otherwise Sepolia itself,
+  // so the button shows the network name just like Solana and Bitcoin do (instead of "Network").
+  const usingEvmId = evmSelected ? (isConnected && chainId !== null ? chainId : ACTIVE_CHAIN.id) : null;
 
   const items: Item[] = [];
 

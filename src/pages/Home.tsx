@@ -4,7 +4,6 @@ import ChainComingSoon from '../components/ChainComingSoon';
 import BitcoinSwapCard from '../components/BitcoinSwapCard';
 import SolanaSwapCard from '../components/SolanaSwapCard';
 import { useChain } from '../chains/ChainContext';
-import { ACTIVE_CHAIN } from '../config/chains';
 import PortfolioCard from '../components/PortfolioCard';
 import { useBalances } from '../hooks/useBalances';
 import { usePrices } from '../hooks/usePrices';
@@ -24,10 +23,7 @@ export default function Home() {
         {/* HERO */}
         <div className="grid items-start gap-8 pb-10 pt-8 sm:gap-10 sm:pt-12 lg:grid-cols-[1.1fr_0.9fr] lg:pb-12 lg:pt-20">
           <div className="lg:pt-8">
-            <p className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm text-slate-600">
-              <span className="h-2 w-2 rounded-full bg-horizon" /> Live on {chain.family === 'evm' ? ACTIVE_CHAIN.name : chain.name}
-            </p>
-            <h1 className="mt-5 text-4xl font-bold leading-[1.05] tracking-tight min-[400px]:text-5xl sm:text-6xl">
+            <h1 className="text-4xl font-bold leading-[1.05] tracking-tight min-[400px]:text-5xl sm:text-6xl">
               Swap Tokens.<br />
               <span className="text-altitude">Fly Decentralized.</span>
             </h1>

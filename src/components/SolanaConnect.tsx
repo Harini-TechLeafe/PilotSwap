@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSolana } from '../hooks/useSolana';
+import { useWallet } from '../hooks/useWallet';
 import { shortAddress } from '../lib/format';
 import { SOLANA_RECOMMENDED } from '../lib/solanaWallets';
 
@@ -7,7 +8,9 @@ import { SOLANA_RECOMMENDED } from '../lib/solanaWallets';
 export default function SolanaConnect() {
   const { wallets, address, connecting, connect, disconnect, selected } = useSolana();
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+  // Ethereum / Bitcoin addresses from the main wallet, shown in the same menu as Sepolia / Bitcoin
+  const { account: evmAccount, evmAccounts, bitcoinAccounts, activeBitcoin } = useWallet();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -17,29 +20,89 @@ export default function SolanaConnect() {
   }, []);
 
   if (address) {
+    const walletName = selected?.name ?? 'Solana wallet';
+    // Same layout as the Sepolia / Bitcoin wallet menu (ConnectWallet.tsx): Ethereum, Solana and Bitcoin addresses.
+    const sections = [
+      { id: 'evm', label: 'Ethereum', badge: 'ETH', badgeClass: 'bg-altitude/20 text-altitude', list: evmAccounts, active: evmAccount },
+      { id: 'solana', label: 'Solana', badge: 'SOL', badgeClass: 'bg-emerald-400/15 text-emerald-600', list: [address], active: address },
+      { id: 'bitcoin', label: 'Bitcoin', badge: 'BTC', badgeClass: 'bg-horizon/20 text-horizon', list: bitcoinAccounts, active: activeBitcoin },
+    ];
+    const copy = (addr: string) => {
+      void navigator.clipboard.writeText(addr);
+      setCopied(addr);
+      window.setTimeout(() => setCopied((c) => (c === addr ? null : c)), 1500);
+    };
+
     return (
-      <div className="relative" ref={ref}>
-        <button className="btn-ghost focus-ring whitespace-nowrap" title={`${selected?.name ?? 'Solana wallet'} · ${address}`} onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-haspopup="menu">
+      <div className="relative flex items-center gap-2" ref={ref}>
+        {/* Connected wallet: wallet logo + account name (same blue button as Sepolia / Bitcoin) */}
+        <button
+          className="flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-horizon py-2 pl-2 pr-2.5 text-sm sm:gap-2 sm:pr-3 font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:brightness-110 focus-ring"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          aria-haspopup="menu"
+          title={`${walletName} · ${address}`}
+        >
           {selected?.icon ? (
-            <img src={selected.icon} alt={`${selected.name} logo`} width={24} height={24} className="mr-2 inline-block h-6 w-6 rounded-md bg-white/90 p-0.5 align-middle" />
+            <img src={selected.icon} alt={`${walletName} logo`} width={24} height={24} className="h-6 w-6 rounded-md bg-white/90 p-0.5" />
           ) : (
-            <span aria-hidden className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-400" />
+            <span aria-hidden className="flex h-6 w-6 items-center justify-center rounded-md bg-white/20 text-xs">👛</span>
           )}
-          <span className="font-sans font-semibold">{selected?.name ?? 'Solana wallet'}</span>
-          <span aria-hidden className={`ml-2 text-xs transition ${open ? 'rotate-180' : ''}`}>▾</span>
+          <span>Account 1</span>
+          <span aria-hidden className={`text-xs transition ${open ? 'rotate-180' : ''}`}>▾</span>
         </button>
         {open && (
-          <div role="menu" className="glass absolute right-0 top-12 z-50 w-[min(88vw,16rem)] rounded-2xl p-2 text-sm">
-            <p className="px-2.5 pt-1 text-xs uppercase tracking-wider text-slate-500">{selected?.name ?? 'Solana wallet'}</p>
-            <button
-              className="mt-1 w-full rounded-lg px-3 py-2 text-left font-mono text-slate-800 hover:bg-blue-50"
-              onClick={() => { void navigator.clipboard.writeText(address); setCopied(true); window.setTimeout(() => setCopied(false), 1500); }}
-            >
-              {shortAddress(address)} <span className="float-right font-sans text-xs text-slate-500">{copied ? 'Copied' : 'Copy'}</span>
-            </button>
-            <button className="mt-1 w-full rounded-lg px-3 py-2 text-left text-rose-600 hover:bg-blue-100/70" onClick={() => { void disconnect(); setOpen(false); }}>
-              Disconnect
-            </button>
+          <div role="menu" className="absolute right-0 top-12 z-50 max-h-[calc(100dvh-6rem)] w-[min(92vw,22rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-panel p-2 text-sm shadow-2xl shadow-black/15">
+            <div className="mb-1 flex items-center gap-2.5 px-2.5 pb-2 pt-1.5">
+              {selected?.icon && <img src={selected.icon} alt="" width={28} height={28} className="h-7 w-7 rounded-lg" />}
+              <div className="min-w-0">
+                <p className="font-semibold text-slate-900">{walletName} · Account 1</p>
+                <p className="truncate font-mono text-xs text-slate-500">{shortAddress(address)}</p>
+              </div>
+            </div>
+            <p className="px-2.5 pb-1.5 text-xs uppercase tracking-wider text-slate-500">Your addresses</p>
+
+            {sections.map((sec) => (
+              <div key={sec.id} className="mb-1 rounded-xl bg-blue-50 p-1.5">
+                <div className="flex items-center gap-2 px-1.5 py-1">
+                  <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${sec.badgeClass}`}>{sec.badge}</span>
+                  <span className="font-medium text-slate-800">{sec.label}</span>
+                </div>
+                {sec.list.length > 0 ? (
+                  sec.list.map((addr) => {
+                    const isActive = addr === sec.active;
+                    return (
+                      <div key={addr} className={`flex items-center gap-1 rounded-lg ${isActive ? 'bg-blue-100/70' : 'hover:bg-blue-50'}`}>
+                        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2">
+                          <span className={`h-2 w-2 shrink-0 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-blue-200'}`} />
+                          {sec.id === 'evm' && <span className="shrink-0 font-medium text-slate-800">Account {evmAccounts.findIndex((a) => a === addr) + 1}</span>}
+                          <span className={`truncate font-mono ${sec.id === 'evm' ? 'text-xs text-slate-500' : 'text-slate-800'}`}>{shortAddress(addr)}</span>
+                          {isActive && <span className="ml-auto text-[11px] text-emerald-600">Active</span>}
+                        </div>
+                        <button
+                          className="shrink-0 rounded-lg px-2 py-2 text-xs text-slate-600 hover:bg-blue-100/70 hover:text-cloud focus-ring"
+                          onClick={() => copy(addr)}
+                          aria-label={`Copy ${sec.label} address`}
+                        >
+                          {copied === addr ? 'Copied' : 'Copy'}
+                        </button>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="px-2 py-2 text-slate-500">Not connected</p>
+                )}
+              </div>
+            ))}
+
+            <p className="px-2.5 pb-1 pt-1.5 text-xs leading-relaxed text-slate-500">
+              Copy an address to receive funds. On this screen you are using Solana Devnet.
+            </p>
+            <div className="mt-1 border-t border-blue-100 pt-1">
+              <button className="w-full rounded-lg px-3 py-2 text-left text-rose-600 hover:bg-blue-100/70" onClick={() => { void disconnect(); setOpen(false); }}>
+                Disconnect from PilotSwap
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -56,7 +119,7 @@ export default function SolanaConnect() {
         disabled={connecting}
         onClick={() => setOpen((o) => !o)}
       >
-        {connecting ? 'Check your wallet…' : 'Connect Solana'}
+        {connecting ? 'Check your wallet…' : 'Connect Wallet'}
       </button>
       {open && (
         <div role="menu" className="glass absolute right-0 top-12 z-50 w-[min(92vw,18rem)] max-h-[calc(100dvh-6rem)] overflow-y-auto rounded-2xl p-2 text-sm">

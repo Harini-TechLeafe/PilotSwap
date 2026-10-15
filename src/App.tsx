@@ -6,6 +6,7 @@ import { ChainProvider } from './chains/ChainContext';
 import Home from './pages/Home';
 import Liquidity from './pages/Liquidity';
 import Tokens from './pages/Tokens';
+import Footer from './components/Footer';
 import { SolanaProvider } from './hooks/useSolana';
 import { ThemeProvider } from './hooks/useTheme';
 import { navigate, usePath } from './lib/router';
@@ -29,6 +30,7 @@ export default function App() {
           <WalletProvider>
             <SolanaProvider>
               {isLiquidity ? <Liquidity /> : isTokens ? <Tokens path={path} /> : <Home />}
+              <Footer />
               <WalletPicker />
             </SolanaProvider>
           </WalletProvider>

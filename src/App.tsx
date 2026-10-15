@@ -6,22 +6,22 @@ import { ChainProvider } from './chains/ChainContext';
 import Home from './pages/Home';
 import Liquidity from './pages/Liquidity';
 import Tokens from './pages/Tokens';
+import NotFound from './pages/NotFound';
 import Footer from './components/Footer';
 import { SolanaProvider } from './hooks/useSolana';
 import { ThemeProvider } from './hooks/useTheme';
-import { navigate, usePath } from './lib/router';
+import { usePath } from './lib/router';
 
-/** Clean-URL routes: "/liquidity", "/tokens", "/tokens/usdc"; everything else is Home ("/"). */
+/** Clean-URL routes: "/liquidity", "/tokens", "/tokens/usdc"; unknown paths show the 404 page. */
 export default function App() {
   const path = usePath();
   const isLiquidity = path === '/liquidity';
   const isTokens = path === '/tokens' || path.startsWith('/tokens/');
-  const isHome = !isLiquidity && !isTokens;
+  const isHome = path === '/';
+  const isNotFound = !isHome && !isLiquidity && !isTokens;
 
-  // Unknown URLs show Home; tidy the address bar to "/".
-  useEffect(() => { if (isHome && path !== '/') navigate('/', { replace: true }); }, [isHome, path]);
   // Always start a new page at the top.
-  useEffect(() => { window.scrollTo({ top: 0 }); }, [isLiquidity, isTokens]);
+  useEffect(() => { window.scrollTo({ top: 0 }); }, [path]);
 
   return (
     <ThemeProvider>
@@ -29,7 +29,7 @@ export default function App() {
         <ChainProvider>
           <WalletProvider>
             <SolanaProvider>
-              {isLiquidity ? <Liquidity /> : isTokens ? <Tokens path={path} /> : <Home />}
+              {isNotFound ? <NotFound /> : isLiquidity ? <Liquidity /> : isTokens ? <Tokens path={path} /> : <Home />}
               <Footer />
               <WalletPicker />
             </SolanaProvider>

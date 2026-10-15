@@ -2,6 +2,7 @@ import Navbar from '../components/Navbar';
 import SwapCard from '../components/SwapCard';
 import ChainComingSoon from '../components/ChainComingSoon';
 import BitcoinSwapCard from '../components/BitcoinSwapCard';
+import SolanaSwapCard from '../components/SolanaSwapCard';
 import { useChain } from '../chains/ChainContext';
 import { ACTIVE_CHAIN } from '../config/chains';
 import PortfolioCard from '../components/PortfolioCard';
@@ -21,17 +22,17 @@ export default function Home() {
       <Navbar />
       <main className="mx-auto max-w-6xl px-4 sm:px-6">
         {/* HERO */}
-        <div className="grid items-start gap-10 pb-10 pt-12 lg:grid-cols-[1.1fr_0.9fr] lg:pb-12 lg:pt-20">
+        <div className="grid items-start gap-8 pb-10 pt-8 sm:gap-10 sm:pt-12 lg:grid-cols-[1.1fr_0.9fr] lg:pb-12 lg:pt-20">
           <div className="lg:pt-8">
             <p className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm text-slate-600">
-              <span className="h-2 w-2 rounded-full bg-horizon" /> Live on {ACTIVE_CHAIN.name}
+              <span className="h-2 w-2 rounded-full bg-horizon" /> Live on {chain.family === 'evm' ? ACTIVE_CHAIN.name : chain.name}
             </p>
-            <h1 className="mt-5 text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
+            <h1 className="mt-5 text-4xl font-bold leading-[1.05] tracking-tight min-[400px]:text-5xl sm:text-6xl">
               Swap Tokens.<br />
               <span className="text-altitude">Fly Decentralized.</span>
             </h1>
             <div className="mt-8 flex flex-wrap items-center gap-4">
-              <a href="#swap" className="rounded-2xl bg-horizon px-6 py-3.5 font-display font-semibold text-white transition hover:brightness-110 focus-ring">Start Swapping</a>
+              <a href="/" onClick={(e) => { e.preventDefault(); document.getElementById('swap')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} className="rounded-2xl bg-horizon px-6 py-3.5 font-display font-semibold text-white transition hover:brightness-110 focus-ring">Start Swapping</a>
               <span className="text-sm text-slate-500">Simple. Secure. Decentralized.</span>
             </div>
             <svg className="mt-12 hidden w-full max-w-lg text-horizon/40 lg:block" viewBox="0 0 480 90" fill="none" aria-hidden>
@@ -39,11 +40,11 @@ export default function Home() {
               <path d="M468 22 478 30 466 36z" fill="currentColor" />
             </svg>
           </div>
-          {chain.family === 'evm' ? <SwapCard /> : chain.family === 'bitcoin' ? <BitcoinSwapCard /> : <ChainComingSoon chain={chain} />}
+          {chain.family === 'evm' ? <SwapCard /> : chain.family === 'bitcoin' ? <BitcoinSwapCard /> : chain.family === 'solana' ? <SolanaSwapCard /> : <ChainComingSoon chain={chain} />}
         </div>
 
         {/* TOTAL BALANCE */}
-        <PortfolioCard balances={showBalances ? balances : {}} balancesLoading={loading} prices={prices} />
+        {chain.family === 'evm' && <PortfolioCard balances={showBalances ? balances : {}} balancesLoading={loading} prices={prices} />}
       </main>
     </div>
   );

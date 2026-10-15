@@ -60,14 +60,14 @@ export default function ConnectWallet() {
     return (
       <div className="relative" ref={ref}>
         <button
-          className="rounded-xl bg-horizon px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-60 focus-ring"
+          className="whitespace-nowrap rounded-xl bg-horizon px-3 py-2.5 text-sm font-semibold sm:px-4 text-white transition hover:brightness-110 disabled:opacity-60 focus-ring"
           disabled={isConnecting}
           onClick={() => void connect()}
         >
           {isConnecting ? 'Check your wallet…' : 'Connect Wallet'}
         </button>
         {showMissing && !isInstalled && (
-          <div role="alert" className="glass absolute right-0 top-12 z-50 w-72 rounded-xl p-3.5 text-sm">
+          <div role="alert" className="glass absolute right-0 top-12 z-50 w-[min(92vw,18rem)] rounded-xl p-3.5 text-sm">
             <p className="text-slate-700">{METAMASK_MISSING}</p>
             <a className="mt-2 inline-block font-medium text-horizon hover:underline" href={METAMASK_DOWNLOAD} target="_blank" rel="noopener noreferrer">
               Get MetaMask
@@ -82,7 +82,7 @@ export default function ConnectWallet() {
     <div className="relative flex items-center gap-2" ref={ref}>
       {/* Connected wallet: wallet logo + account name (like "MetaMask · Account 1") */}
       <button
-        className="flex items-center gap-2 rounded-xl bg-horizon py-2 pl-2 pr-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:brightness-110 focus-ring"
+        className="flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-horizon py-2 pl-2 pr-2.5 text-sm sm:gap-2 sm:pr-3 font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:brightness-110 focus-ring"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="menu"
@@ -97,7 +97,7 @@ export default function ConnectWallet() {
         <span aria-hidden className={`text-xs transition ${open ? 'rotate-180' : ''}`}>▾</span>
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 top-12 z-50 w-[min(92vw,22rem)] rounded-2xl border border-slate-200 bg-white p-2 text-sm shadow-2xl shadow-slate-900/15">
+        <div role="menu" className="absolute right-0 top-12 z-50 max-h-[calc(100dvh-6rem)] w-[min(92vw,22rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-panel p-2 text-sm shadow-2xl shadow-black/15">
           <div className="mb-1 flex items-center gap-2.5 px-2.5 pb-2 pt-1.5">
             {selectedWallet?.info.icon && <img src={selectedWallet.info.icon} alt="" width={28} height={28} className="h-7 w-7 rounded-lg" />}
             <div className="min-w-0">

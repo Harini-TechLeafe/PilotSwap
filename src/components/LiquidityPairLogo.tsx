@@ -13,8 +13,8 @@ export interface PairToken {
 function LiquidityPairLogo({ a, b, size = 36 }: { a: PairToken; b: PairToken; size?: number }) {
   return (
     <span className="flex shrink-0 items-center" role="group" aria-label={`${a.symbol} and ${b.symbol}`}>
-      <TokenLogo {...a} size={size} className="border-2 border-white" />
-      <TokenLogo {...b} size={size} className="-ml-2.5 border-2 border-white" />
+      <TokenLogo {...a} size={size} className="border-2 border-panel" />
+      <TokenLogo {...b} size={size} className="-ml-2.5 border-2 border-panel" />
     </span>
   );
 }

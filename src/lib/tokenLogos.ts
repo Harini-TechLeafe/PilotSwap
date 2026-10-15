@@ -23,7 +23,7 @@ export type TokenRef =
   | { family: 'solana'; mint: string | null }
   | { family: 'cardano'; policyId: string | null; assetNameHex?: string }
   | { family: 'bitcoin' }
-  | { family: 'native'; folder: 'ripple' | 'doge' | 'tron' };
+  | { family: 'native'; folder: 'ripple' | 'doge' | 'tron' | 'litecoin' | 'bitcoincash' };
 
 const TRUST = 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains';
 const SOLANA_LIST = 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet';

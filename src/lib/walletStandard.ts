@@ -12,6 +12,7 @@ export interface StdAccount {
 
 export interface StdWallet {
   name: string;
+  icon?: string;
   chains: readonly string[];
   accounts: readonly StdAccount[];
   features: Record<string, any>;

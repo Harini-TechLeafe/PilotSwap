@@ -4,6 +4,7 @@ import { TOKENS } from '../config/tokens';
 import { usePortfolioHistory, type Point, type Range } from '../hooks/usePortfolioHistory';
 import type { TokenPrice } from '../hooks/usePrices';
 import { useWallet } from '../hooks/useWallet';
+import { useTheme } from '../hooks/useTheme';
 import { formatAmount, formatUsd } from '../lib/format';
 import type { TokenRef } from '../lib/tokenLogos';
 import TokenLogo from './TokenLogo';
@@ -158,7 +159,7 @@ function Shell({ children, range, setRange, showRange }: { children: ReactNode; 
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <h2 id="portfolio-title" className="text-2xl font-semibold">Total wallet balance</h2>
         {showRange && (
-          <div role="radiogroup" aria-label="Time range" className="inline-flex rounded-xl border border-blue-100 bg-white p-1">
+          <div role="radiogroup" aria-label="Time range" className="inline-flex rounded-xl border border-blue-100 bg-panel p-1">
             {RANGES.map((r) => (
               <button
                 key={r.id}
@@ -218,7 +219,9 @@ function fmtTick(t: number, range: Range | 'live'): string {
 }
 
 /** Also used by the Explore Tokens page: pass `fmt` / `gridFmt` to show prices with more decimals than whole dollars. */
-export function ValueChart({ points, color, range, start, fmt = formatUsd, gridFmt }: { points: Point[]; color: string; range: Range | 'live'; start: number; fmt?: (n: number) => string; gridFmt?: (n: number, span: number) => string }) {
+export function ValueChart({ points, color: baseColor, range, start, fmt = formatUsd, gridFmt }: { points: Point[]; color: string; range: Range | 'live'; start: number; fmt?: (n: number) => string; gridFmt?: (n: number, span: number) => string }) {
+  const { theme } = useTheme();
+  const color = theme === 'dark' && baseColor === LINE ? '#4F86FF' : baseColor; // brighter brand blue on dark
   const wrap = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(600);
   const [hover, setHover] = useState<number | null>(null);
@@ -276,7 +279,7 @@ export function ValueChart({ points, color, range, start, fmt = formatUsd, gridF
     const anchor = px < 60 ? 'start' : px > w - 60 ? 'end' : 'middle';
     return (
       <g>
-        <circle cx={px} cy={py} r={4} fill="#fff" stroke={color} strokeWidth={2} />
+        <circle cx={px} cy={py} r={4} className="fill-panel" stroke={color} strokeWidth={2} />
         <text x={px} y={above ? py - 10 : py + 18} textAnchor={anchor} className="fill-slate-600 text-[11px] font-medium">{text}</text>
       </g>
     );
@@ -307,15 +310,15 @@ export function ValueChart({ points, color, range, start, fmt = formatUsd, gridF
         {/* horizontal grid with $ labels */}
         {geo.grid.map((g) => (
           <g key={g}>
-            <line x1={PAD.left} x2={w - PAD.right} y1={geo.y(g)} y2={geo.y(g)} stroke="#e2e8f0" strokeWidth={1} />
+            <line x1={PAD.left} x2={w - PAD.right} y1={geo.y(g)} y2={geo.y(g)} className="stroke-slate-200" strokeWidth={1} />
             <text x={PAD.left - 8} y={geo.y(g) + 4} textAnchor="end" className="fill-slate-400 text-[10px] tabular-nums">
               {gridFmt ? gridFmt(g, geo.span) : `$${g.toLocaleString('en-US', { maximumFractionDigits: geo.span < 20 ? 2 : 0 })}`}
             </text>
           </g>
         ))}
         {/* baseline + start reference */}
-        <line x1={PAD.left} x2={w - PAD.right} y1={H - PAD.bottom} y2={H - PAD.bottom} stroke="#dbeafe" />
-        <line x1={PAD.left} x2={w - PAD.right} y1={geo.y(start)} y2={geo.y(start)} stroke="#94a3b8" strokeDasharray="3 4" strokeWidth={1} />
+        <line x1={PAD.left} x2={w - PAD.right} y1={H - PAD.bottom} y2={H - PAD.bottom} className="stroke-blue-100" />
+        <line x1={PAD.left} x2={w - PAD.right} y1={geo.y(start)} y2={geo.y(start)} className="stroke-slate-400" strokeDasharray="3 4" strokeWidth={1} />
         <text x={w - PAD.right} y={geo.y(start) - 5} textAnchor="end" className="fill-slate-400 text-[10px]">start {fmt(start)}</text>
 
         <path d={geo.area} fill={`url(#${gid})`} />
@@ -324,7 +327,7 @@ export function ValueChart({ points, color, range, start, fmt = formatUsd, gridF
         {geo.iHi !== geo.iLo && label(geo.iHi, `High ${fmt(points[geo.iHi].v)}`, true)}
         {geo.iHi !== geo.iLo && label(geo.iLo, `Low ${fmt(points[geo.iLo].v)}`, false)}
         {/* "now" dot */}
-        <circle cx={geo.x(points[points.length - 1].t)} cy={geo.y(points[points.length - 1].v)} r={4.5} fill={color} stroke="#fff" strokeWidth={2} />
+        <circle cx={geo.x(points[points.length - 1].t)} cy={geo.y(points[points.length - 1].v)} r={4.5} fill={color} className="stroke-panel" strokeWidth={2} />
 
         {geo.ticks.map((t) => (
           <text key={t} x={geo.x(t)} y={H - 8} textAnchor="middle" className="fill-slate-400 text-[11px]">{fmtTick(t, range)}</text>
@@ -332,15 +335,15 @@ export function ValueChart({ points, color, range, start, fmt = formatUsd, gridF
 
         {hp && (
           <g pointerEvents="none">
-            <line x1={geo.x(hp.t)} x2={geo.x(hp.t)} y1={PAD.top - 8} y2={H - PAD.bottom} stroke="#0B1F4D" strokeOpacity={0.25} />
-            <circle cx={geo.x(hp.t)} cy={geo.y(hp.v)} r={5} fill={color} stroke="#fff" strokeWidth={2} />
+            <line x1={geo.x(hp.t)} x2={geo.x(hp.t)} y1={PAD.top - 8} y2={H - PAD.bottom} className="stroke-cloud" strokeOpacity={0.25} />
+            <circle cx={geo.x(hp.t)} cy={geo.y(hp.v)} r={5} fill={color} className="stroke-panel" strokeWidth={2} />
           </g>
         )}
       </svg>
 
       {hp && (
         <div
-          className="pointer-events-none absolute top-0 z-10 rounded-xl border border-blue-100 bg-white px-3 py-2 text-sm shadow-lg shadow-blue-900/10"
+          className="pointer-events-none absolute top-0 z-10 rounded-xl border border-blue-100 bg-panel px-3 py-2 text-sm shadow-lg shadow-blue-900/10"
           style={{ left: Math.min(Math.max(geo.x(hp.t) - 80, 0), w - 160), width: 160 }}
         >
           <p className="font-display text-base font-bold tabular-nums text-cloud">{fmt(hp.v)}</p>

@@ -106,16 +106,16 @@ export default function ChainSelector() {
   const current = ordered.find((i) => i.current) ?? null;
 
   return (
-    <div className="relative" ref={ref}>
-      <button className="btn-ghost focus-ring flex items-center gap-2" onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open}>
+    <div className="sm:relative" ref={ref}>
+      <button className="btn-ghost focus-ring flex items-center gap-1.5 !px-2.5 sm:gap-2 sm:!px-3.5" aria-label={current ? `Network: ${current.name}` : 'Select network'} onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open}>
         {current ? <NetworkIcon item={current} size={24} /> : <span aria-hidden className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-100/80 text-xs text-horizon">◎</span>}
-        <span>{current ? current.name : 'Network'}</span>
+        <span className="hidden sm:inline">{current ? current.name : 'Network'}</span>
         <span aria-hidden className={`text-xs transition ${open ? 'rotate-180' : ''}`}>▾</span>
       </button>
 
       {open && (
         /* Solid white panel (no see-through blur) so the page behind never shows through the text. */
-        <div role="menu" className="absolute right-0 top-12 z-50 w-[min(92vw,22rem)] rounded-2xl border border-slate-200 bg-white p-3 text-sm shadow-2xl shadow-slate-900/15">
+        <div role="menu" className="absolute inset-x-3 top-full z-50 mt-2 max-h-[calc(100dvh-6rem)] overflow-y-auto rounded-2xl border sm:inset-x-auto sm:right-0 sm:top-12 sm:mt-0 sm:w-[22rem] border-slate-200 bg-panel p-3 text-sm shadow-2xl shadow-black/15">
           <p className="px-1 font-display text-base font-semibold text-slate-900">Select network</p>
           <p className="px-1 pb-2 text-xs text-slate-600">Choose a blockchain network for your wallet.</p>
 
@@ -133,7 +133,7 @@ export default function ChainSelector() {
                   <span className={`shrink-0 ${i.used || i.current ? '' : 'opacity-50'}`}><NetworkIcon item={i} /></span>
                   <span className="min-w-0 flex-1">
                     {/* Selected = black. Used for swaps = dark grey. Coming soon = light grey. */}
-                    <span className={`block truncate font-semibold ${i.current ? 'text-black' : i.used ? 'text-slate-800' : 'text-slate-400'}`}>{i.name}</span>
+                    <span className={`block truncate font-semibold ${i.current ? 'text-cloud' : i.used ? 'text-slate-800' : 'text-slate-400'}`}>{i.name}</span>
                     <span className={`block truncate font-mono text-[11px] ${i.current ? 'text-slate-700' : i.used ? 'text-slate-500' : 'text-slate-300'}`}>{i.sub}</span>
                   </span>
                   {i.current && <span aria-label="In use" className="text-emerald-600">✓</span>}

@@ -98,7 +98,7 @@ function useEscape(active: boolean, onClose: () => void) {
 function Popup({ label, onClose, children }: { label: string; onClose: () => void; children: ReactNode }) {
   useEscape(true, onClose);
   return (
-    <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-[85] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onMouseDown={onClose}>
       <div role="dialog" aria-modal="true" aria-label={label} className="glass toast-in w-full max-w-sm rounded-3xl p-6" onMouseDown={(e) => e.stopPropagation()}>
         {children}
       </div>
@@ -195,9 +195,9 @@ export function AddLiquidityDrawer({ onClose }: { onClose: () => void }) {
   const cta = !pair ? 'Select a pair' : !hasAmount ? 'Enter an amount' : 'Add Liquidity';
 
   return (
-    <div className="fixed inset-0 z-[80] flex justify-end bg-slate-900/35 backdrop-blur-[2px]" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-[80] flex justify-end bg-black/35 backdrop-blur-[2px]" onMouseDown={onClose}>
       <aside role="dialog" aria-modal="true" aria-label="Add liquidity" onMouseDown={(e) => e.stopPropagation()}
-        className="drawer-in flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-blue-100 bg-white p-5 shadow-2xl shadow-blue-900/20 sm:p-6">
+        className="drawer-in flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-blue-100 bg-panel p-5 shadow-2xl shadow-blue-900/20 sm:p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">Add liquidity</h2>
           <button onClick={onClose} aria-label="Close" className="rounded-lg px-2 py-1 text-slate-500 hover:bg-blue-100/70 hover:text-cloud focus-ring">✕</button>
@@ -207,7 +207,7 @@ export function AddLiquidityDrawer({ onClose }: { onClose: () => void }) {
         <div className="mt-5 inline-flex w-full rounded-full bg-blue-50 p-1" role="tablist" aria-label="Network">
           {NETWORKS.map((n) => (
             <button key={n.id} role="tab" aria-selected={network === n.id} onClick={() => pickNetwork(n.id)}
-              className={`flex-1 rounded-full px-3 py-2 text-sm font-medium transition focus-ring ${network === n.id ? 'bg-white text-cloud shadow' : 'text-slate-500 hover:text-cloud'}`}>
+              className={`flex-1 rounded-full px-3 py-2 text-sm font-medium transition focus-ring ${network === n.id ? 'bg-panel text-cloud shadow dark:bg-blue-200' : 'text-slate-500 hover:text-cloud'}`}>
               {n.label}
             </button>
           ))}
@@ -249,7 +249,7 @@ export function AddLiquidityDrawer({ onClose }: { onClose: () => void }) {
                 <label key={side} className="field flex items-center gap-3">
                   <input inputMode="decimal" autoComplete="off" placeholder="0.0" value={val} onChange={(e) => onChange(side, e.target.value)} aria-label={`${tok.symbol} amount`}
                     className="min-w-0 flex-1 bg-transparent font-display text-2xl font-semibold tabular-nums outline-none placeholder:text-slate-300" />
-                  <span className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-sm font-semibold shadow-sm ring-1 ring-blue-100">
+                  <span className="flex items-center gap-2 rounded-full bg-panel px-3 py-1.5 text-sm font-semibold shadow-sm ring-1 ring-blue-100">
                     <TokenLogo token={tok.token} symbol={tok.symbol} name={tok.name} size={22} />
                     {tok.symbol}
                   </span>

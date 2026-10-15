@@ -78,8 +78,8 @@ export default function TokenModal({ token, balances, balancesLoading, refreshBa
   const usdValue = bal !== undefined && price !== undefined ? Number(formatUnits(bal, token.decimals)) * price : null;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-slate-900/45 p-0 backdrop-blur-sm sm:items-center sm:p-4" onMouseDown={onClose} role="dialog" aria-modal="true" aria-label={`${token.symbol} wallet actions`}>
-      <div className="max-h-[94vh] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-blue-100 bg-white p-5 shadow-2xl shadow-blue-900/20 sm:rounded-3xl sm:p-6" onMouseDown={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/45 p-0 backdrop-blur-sm sm:items-center sm:p-4" onMouseDown={onClose} role="dialog" aria-modal="true" aria-label={`${token.symbol} wallet actions`}>
+      <div className="max-h-[94vh] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-blue-100 bg-panel p-5 shadow-2xl shadow-blue-900/20 sm:rounded-3xl sm:p-6" onMouseDown={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -128,7 +128,7 @@ export default function TokenModal({ token, balances, balancesLoading, refreshBa
 
         {/* Panel */}
         {tab && (
-          <div className="mt-4 rounded-2xl border border-blue-100 bg-white p-4">
+          <div className="mt-4 rounded-2xl border border-blue-100 bg-panel p-4">
             {!isConnected ? (
               <div className="text-center">
                 <p className="text-sm text-slate-600">Connect your wallet to {tab} {token.symbol}.</p>
@@ -195,7 +195,7 @@ function SendPanel({ token: initial, account, walletClient, balances, refreshBal
             placeholder="0x… recipient wallet address"
             autoComplete="off"
             spellCheck={false}
-            className={`w-full rounded-xl border bg-white px-3 py-2.5 font-mono text-sm outline-none transition focus:border-altitude/60 ${toInvalid ? 'border-rose-400' : 'border-blue-100'}`}
+            className={`w-full rounded-xl border bg-panel px-3 py-2.5 font-mono text-sm outline-none transition focus:border-altitude/60 ${toInvalid ? 'border-rose-400' : 'border-blue-100'}`}
           />
           {toInvalid && <p className="mt-1 text-xs text-rose-600">Not a valid {ACTIVE_CHAIN.name} address.</p>}
         </div>
@@ -213,7 +213,7 @@ function SendPanel({ token: initial, account, walletClient, balances, refreshBal
 
         <div>
           <FieldLabel htmlFor="send-amount">Amount</FieldLabel>
-          <div className={`flex items-center gap-2 rounded-xl border bg-white px-3 py-2 transition focus-within:border-altitude/60 ${over ? 'border-rose-400' : 'border-blue-100'}`}>
+          <div className={`flex items-center gap-2 rounded-xl border bg-panel px-3 py-2 transition focus-within:border-altitude/60 ${over ? 'border-rose-400' : 'border-blue-100'}`}>
             <input
               id="send-amount"
               inputMode="decimal"
@@ -266,7 +266,9 @@ function ReceivePanel({ token, account }: { token: Token; account: string }) {
         <div className="mt-2 rounded-xl border border-blue-100 p-3 text-left">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{token.symbol} token contract</p>
           <div className="mt-1 flex items-center gap-2">
-            <a href={contractUrl ?? '#'} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 font-mono text-sm text-horizon hover:underline">{shortAddress(token.address)}</a>
+            {contractUrl
+              ? <a href={contractUrl} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 font-mono text-sm text-horizon hover:underline">{shortAddress(token.address)}</a>
+              : <span className="min-w-0 flex-1 font-mono text-sm text-cloud">{shortAddress(token.address)}</span>}
             <CopyButton text={token.address} />
           </div>
           <p className="mt-1 text-xs text-slate-500">Import this contract in your wallet if {token.symbol} does not show up after you receive it.</p>

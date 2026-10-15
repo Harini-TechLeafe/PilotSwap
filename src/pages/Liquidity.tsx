@@ -221,10 +221,10 @@ export default function Liquidity() {
   return (
     <div id="top">
       <Navbar />
-      <main className="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6">
+      <main className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 sm:pt-10">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-bold tracking-tight">Liquidity</h1>
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Liquidity</h1>
             <p className="mt-1 text-slate-500">Earn yield from pools across EVM and non-EVM chains</p>
           </div>
           <AddLiquidityButton onClick={onAddLiquidity} />
@@ -249,7 +249,7 @@ export default function Liquidity() {
             <div className="grid grid-cols-3 gap-2 rounded-2xl border border-dashed border-blue-100 p-2">
               {METRICS.map((m) => (
                 <button key={m.id} onClick={() => { setMetric(m.id); setHover(null); }} aria-pressed={metric === m.id}
-                  className={`flex min-h-[10rem] flex-col justify-between rounded-2xl p-3 text-left transition focus-ring sm:p-4 ${metric === m.id ? 'bg-blue-50 ring-1 ring-blue-100' : 'hover:bg-blue-50/60'}`}>
+                  className={`flex min-h-[7.5rem] flex-col justify-between sm:min-h-[10rem] rounded-2xl p-3 text-left transition focus-ring sm:p-4 ${metric === m.id ? 'bg-blue-50 ring-1 ring-blue-100' : 'hover:bg-blue-50/60'}`}>
                   <span className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${metric === m.id ? 'bg-horizon text-white' : 'bg-blue-100/70 text-slate-500'}`}>
                     {m.id === 'volume' ? '▮▮' : m.id === 'fees' ? '●' : '$'}
                   </span>
@@ -294,18 +294,18 @@ export default function Liquidity() {
           <div className="inline-flex rounded-full bg-blue-50 p-1" role="tablist" aria-label="Pools view">
             {([['all', 'All pools'], ['mine', 'My Positions']] as const).map(([id, label]) => (
               <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-                className={`rounded-full px-5 py-2 text-sm font-medium transition focus-ring ${tab === id ? 'bg-white text-cloud shadow' : 'text-slate-500 hover:text-cloud'}`}>
+                className={`rounded-full px-5 py-2 text-sm font-medium transition focus-ring ${tab === id ? 'bg-panel text-cloud shadow dark:bg-blue-200' : 'text-slate-500 hover:text-cloud'}`}>
                 {label}
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
             {searchOpen && (
               <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search pool, chain or address"
-                className="w-48 rounded-full border border-blue-100 bg-white px-4 py-2 text-sm outline-none focus:border-altitude/60 sm:w-64" />
+                className="w-full min-w-0 rounded-full border border-blue-100 bg-panel px-4 py-2 text-sm outline-none focus:border-altitude/60 sm:w-64" />
             )}
             <button onClick={() => { setSearchOpen((o) => !o); if (searchOpen) setQuery(''); }} aria-label="Search pools"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-blue-100 bg-white hover:bg-blue-50 focus-ring">
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-blue-100 bg-panel hover:bg-blue-50 focus-ring">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
             </button>
             <div className="relative" ref={filterRef}>
@@ -330,7 +330,66 @@ export default function Liquidity() {
         </div>
 
         {/* POOL TABLE */}
-        <div className="mt-4 overflow-x-auto">
+        {/* Phones and small tablets: one card per pool (a 7-column table does not fit) */}
+        <div className="mt-4 md:hidden">
+          <label className="mb-3 flex items-center gap-2 text-sm text-slate-500">
+            Sort by
+            <select value={sort.key} onChange={(e) => setSort({ key: e.target.value as SortKey, dir: 'desc' })} className="rounded-full border border-blue-100 bg-panel px-3 py-1.5 text-sm text-cloud outline-none focus:border-altitude/60">
+              {COLS.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+            </select>
+          </label>
+          {rows.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-blue-100 py-12 text-center text-slate-500">
+              {tab === 'mine' ? (isConnected ? <p>You have no liquidity positions yet.</p> : (
+                <>
+                  <p>Connect your wallet to see your positions.</p>
+                  <button onClick={() => void connect()} disabled={isConnecting} className="mt-4 rounded-xl bg-horizon px-5 py-2.5 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-60 focus-ring">
+                    {isConnecting ? 'Check your wallet…' : 'Connect Wallet'}
+                  </button>
+                </>
+              )) : <p>No pools match your search or filter.</p>}
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {rows.map((p) => {
+                const meta = CHAIN_META[p.chain];
+                const fav = favs.includes(p.id);
+                const stats: [string, string][] = [['TVL', money(p, p.tvl)], ['APR', `${p.apr.toFixed(2)}%`], ['Vol 24H', money(p, p.vol24)], ['Vol 7D', money(p, p.vol7)], ['Fees 24H', money(p, p.fee24)], ['Fees 7D', money(p, p.fee7)]];
+                return (
+                  <li key={p.id} className="glass rounded-2xl p-4">
+                    <div className="flex items-start gap-3">
+                      <button onClick={() => toggleFav(p.id)} aria-pressed={fav} aria-label={fav ? 'Remove from favorites' : 'Add to favorites'}
+                        className={`text-xl leading-none focus-ring ${fav ? 'text-amber-400' : 'text-slate-400 hover:text-amber-400'}`}>{fav ? '★' : '☆'}</button>
+                      <LiquidityPairLogo a={toPair(p.a)} b={toPair(p.b)} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-display font-semibold">{p.a.s}-{p.b.s}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+                          <span className="rounded-full bg-horizon px-2 py-0.5 font-semibold text-white">{p.version}</span>
+                          <span className="rounded-full bg-blue-50 px-2 py-0.5 font-medium text-horizon">{p.fee}</span>
+                          <span className={`rounded-full px-2 py-0.5 font-semibold ${meta.badgeClass}`}>{meta.badge}</span>
+                        </div>
+                        <button onClick={() => copy(p.address)} className="mt-1.5 font-mono text-xs text-slate-500 hover:text-cloud focus-ring" title="Copy pool address">
+                          {copied === p.address ? 'Copied' : p.address}
+                        </button>
+                      </div>
+                    </div>
+                    <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-blue-100/70 pt-3 text-sm">
+                      {stats.map(([k, v]) => (
+                        <div key={k} className="min-w-0">
+                          <dt className="text-xs text-slate-500">{k}</dt>
+                          <dd className="truncate font-medium tabular-nums">{v}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <div className="mt-4 hidden overflow-x-auto md:block">
           <div className="min-w-[860px]">
             <div className="grid grid-cols-[minmax(0,2.2fr)_repeat(6,minmax(0,1fr))] items-center rounded-2xl bg-blue-50 px-5 py-3 text-sm text-slate-500">
               <span>Name</span>

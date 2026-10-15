@@ -107,3 +107,15 @@ Logo files live in `public/` (`logo-icon.png`, `logo-full.png`, `favicon.png`).
 active chain; EVM (Sepolia) is fully working, while Solana, Cardano and Bitcoin show a "not implemented" card (nothing is faked).
 To add one: implement a `SwapAdapter` for it, set `supported: true`, and render it in `src/pages/Home.tsx`.
 Note: a single swap cannot cross families (e.g. ETH to SOL) without a bridge/cross-chain service.
+
+## Solana (devnet): connect wallet and view balances
+Network menu -> **Solana Devnet**. The navbar button becomes **Connect Solana** (Phantom, Solflare, Backpack, MetaMask Solana, TokenPocket). It shows the same swap screen as Ethereum (From/To, token picker, wallet balances, live market-rate estimate). The Swap button is disabled: no swap runs on Solana, and sending/receiving is done in the wallet itself.
+- Config: `VITE_SOLANA_CLUSTER`, `VITE_SOLANA_RPC_URL`.
+- Code: `src/lib/solana.ts`, `src/lib/solanaWallets.ts`, `src/hooks/useSolana.tsx`, `src/components/SolanaSwapCard.tsx`, `SolanaConnect.tsx`.
+- Run `npm install` (new deps: @solana/web3.js, @solana/spl-token, buffer) then `npm run typecheck`. Not compiled where it was written.
+
+## Clean URLs and dark mode
+
+- Pages use real paths, no `#`: `/`, `/tokens`, `/tokens/usdc`, `/liquidity`. Old links such as `#liquidity` or `#tokens/usdc` are redirected to the clean path automatically.
+- Because these are real paths, the host must serve `index.html` for unknown paths. `public/_redirects` (Netlify/Cloudflare Pages) and `vercel.json` (Vercel) are included; `npm run dev` and `npm run preview` already do this.
+- The moon button in the navbar switches light/dark (sun in dark mode). The choice is saved, and the first visit follows the system setting. Theme colours live as CSS variables in `src/index.css`.

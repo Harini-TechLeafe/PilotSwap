@@ -9,6 +9,9 @@ export const ENV = {
   usdcAddress: (e.VITE_USDC_ADDRESS ?? '').trim(),
   daiAddress: (e.VITE_DAI_ADDRESS ?? '').trim(),
   tbtcAddress: (e.VITE_TBTC_ADDRESS ?? '').trim(),
+  /** Solana (devnet by default). The public RPC is rate-limited; use a free Helius/QuickNode URL if it fails. */
+  solanaRpcUrl: (e.VITE_SOLANA_RPC_URL ?? 'https://api.devnet.solana.com').trim(),
+  solanaCluster: (e.VITE_SOLANA_CLUSTER ?? 'devnet').trim(),
   /** Optional CoinGecko demo key (free). Public API works without it but is rate-limited. */
   coingeckoApiKey: (e.VITE_COINGECKO_API_KEY ?? '').trim(),
 } as const;

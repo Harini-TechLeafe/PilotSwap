@@ -23,6 +23,11 @@ const BTC_TOKENS: BtcToken[] = [
   { id: 'USDC', symbol: 'USDC', name: 'USD Coin', coingeckoId: 'usd-coin', token: { family: 'evm', chainId: 1, address: '0xA0b86991c6218b36c1d19D4a2E9Eb0cE3606eB48' } },
   { id: 'USDT', symbol: 'USDT', name: 'Tether USD', coingeckoId: 'tether', token: { family: 'evm', chainId: 1, address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' } },
   { id: 'SOL', symbol: 'SOL', name: 'Solana', coingeckoId: 'solana', token: { family: 'solana', mint: null } },
+  { id: 'BCH', symbol: 'BCH', name: 'Bitcoin Cash', coingeckoId: 'bitcoin-cash', token: { family: 'native', folder: 'bitcoincash' } },
+  { id: 'LTC', symbol: 'LTC', name: 'Litecoin', coingeckoId: 'litecoin', token: { family: 'native', folder: 'litecoin' } },
+  { id: 'DOGE', symbol: 'DOGE', name: 'Dogecoin', coingeckoId: 'dogecoin', token: { family: 'native', folder: 'doge' } },
+  { id: 'XRP', symbol: 'XRP', name: 'XRP', coingeckoId: 'ripple', token: { family: 'native', folder: 'ripple' } },
+  { id: 'BNB', symbol: 'BNB', name: 'BNB', coingeckoId: 'binancecoin', token: { family: 'evm', chainId: 56, address: null } },
 ];
 const byId = (id: string) => BTC_TOKENS.find((t) => t.id === id) ?? BTC_TOKENS[0];
 
@@ -65,7 +70,7 @@ function TokenButton({ token, onPick, disabledId }: { token: BtcToken; onPick: (
         <span aria-hidden className="text-xs text-slate-500">▾</span>
       </button>
       {open && createPortal(
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/40 p-4 backdrop-blur-sm sm:items-center" onMouseDown={() => setOpen(false)} role="dialog" aria-modal="true" aria-label="Select a token">
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-4 backdrop-blur-sm sm:items-center" onMouseDown={() => setOpen(false)} role="dialog" aria-modal="true" aria-label="Select a token">
           <div className="glass w-full max-w-sm rounded-3xl p-4" onMouseDown={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-lg font-semibold">Select a token</h3>

@@ -45,7 +45,7 @@ export default function TokenSelector({ value, onChange, balances, disabledIds =
 
       {/* Portal to <body> so the picker also works inside other popups (backdrop-blur would otherwise trap a fixed overlay). */}
       {open && createPortal(
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/40 p-4 backdrop-blur-sm sm:items-center" onMouseDown={() => setOpen(false)} role="dialog" aria-modal="true" aria-label="Select a token">
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-4 backdrop-blur-sm sm:items-center" onMouseDown={() => setOpen(false)} role="dialog" aria-modal="true" aria-label="Select a token">
           <div className="glass w-full max-w-sm rounded-3xl p-4" onMouseDown={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-lg font-semibold">Select a token</h3>

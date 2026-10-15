@@ -12,6 +12,9 @@
     "deploy:dry": "node scripts/deploy.mjs --dry-run"
   },
   "dependencies": {
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.98.0",
+    "buffer": "^6.0.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "viem": "^2.21.19"

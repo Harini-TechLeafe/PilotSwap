@@ -19,7 +19,7 @@ export default function WalletPicker() {
   const missing = RECOMMENDED_WALLETS.filter((r) => !detected.has(r.rdns));
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm" onMouseDown={closePicker}>
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onMouseDown={closePicker}>
       <div
         role="dialog"
         aria-modal="true"

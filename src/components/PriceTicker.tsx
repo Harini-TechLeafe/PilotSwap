@@ -1,3 +1,4 @@
+import { Link } from '../lib/router';
 import { formatCompactUsd, formatPrice, type ExploreToken, type Quote } from '../lib/binance';
 import Sparkline from './Sparkline';
 import TokenLogo from './TokenLogo';
@@ -17,7 +18,7 @@ export default function PriceTicker({ tokens, quotes, sparks, loading, error }: 
   if (!items.length) {
     return (
       <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6" role="status">
-        <p className="rounded-2xl border border-blue-100 bg-white/70 p-4 text-sm text-slate-500">
+        <p className="rounded-2xl border border-blue-100 bg-panel/70 p-4 text-sm text-slate-500">
           {loading ? <span className="animate-pulse">Loading live prices…</span> : error ?? 'Live prices are not available right now.'}
         </p>
       </div>
@@ -35,8 +36,8 @@ export default function PriceTicker({ tokens, quotes, sparks, loading, error }: 
               const up = q.change >= 0;
               return (
                 <li key={t.slug} className="w-[260px] shrink-0">
-                  <a
-                    href={`#tokens/${t.slug}`}
+                  <Link
+                    to={`/tokens/${t.slug}`}
                     tabIndex={copy === 1 ? -1 : undefined}
                     className="glass block rounded-2xl p-4 transition hover:-translate-y-0.5 hover:border-horizon/40 focus-ring"
                   >
@@ -62,7 +63,7 @@ export default function PriceTicker({ tokens, quotes, sparks, loading, error }: 
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden /> Binance
                       </span>
                     </div>
-                  </a>
+                  </Link>
                 </li>
               );
             })}

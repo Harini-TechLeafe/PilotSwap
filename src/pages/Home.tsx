@@ -1,6 +1,5 @@
 
 import Navbar from '../components/Navbar';
-import SwapCard from '../components/SwapCard';
 import ChainComingSoon from '../components/ChainComingSoon';
 import BitcoinSwapCard from '../components/BitcoinSwapCard';
 import SolanaSwapCard from '../components/SolanaSwapCard';
@@ -9,6 +8,7 @@ import PortfolioCard from '../components/PortfolioCard';
 import { useBalances } from '../hooks/useBalances';
 import { usePrices } from '../hooks/usePrices';
 import { useWallet } from '../hooks/useWallet';
+import SwapCard from '../components/SwapCard';
 
 export default function Home() {
   const { chain } = useChain();
@@ -141,7 +141,7 @@ export default function Home() {
               "
               viewBox="0 0 480 90"
               fill="none"
-              aria-hidden
+              aria-hidden="true"
             >
               <path
                 d="M4 80C120 80 150 14 260 24s150 46 216 6"
@@ -160,6 +160,7 @@ export default function Home() {
 
           {/* RIGHT SIDE - SWAP CARD */}
           <div
+            id="swap"
             className="
               w-full
               min-w-0

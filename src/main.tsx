@@ -4,6 +4,9 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
+// Disable the browser context menu across the app.
+document.addEventListener('contextmenu', (event) => event.preventDefault());
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />

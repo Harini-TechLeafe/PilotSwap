@@ -1,9 +1,5 @@
 
 import Navbar from '../components/Navbar';
-import ChainComingSoon from '../components/ChainComingSoon';
-import BitcoinSwapCard from '../components/BitcoinSwapCard';
-import SolanaSwapCard from '../components/SolanaSwapCard';
-import { useChain } from '../chains/ChainContext';
 import PortfolioCard from '../components/PortfolioCard';
 import { useBalances } from '../hooks/useBalances';
 import { usePrices } from '../hooks/usePrices';
@@ -11,8 +7,6 @@ import { useWallet } from '../hooks/useWallet';
 import SwapCard from '../components/SwapCard';
 
 export default function Home() {
-  const { chain } = useChain();
-
   const {
     account,
     isConnected,
@@ -168,28 +162,18 @@ export default function Home() {
               self-start
             "
           >
-            {chain.family === 'evm' ? (
-              <SwapCard />
-            ) : chain.family === 'bitcoin' ? (
-              <BitcoinSwapCard />
-            ) : chain.family === 'solana' ? (
-              <SolanaSwapCard />
-            ) : (
-              <ChainComingSoon chain={chain} />
-            )}
+            <SwapCard />
           </div>
         </div>
 
         {/* TOTAL BALANCE */}
-        {chain.family === 'evm' && (
-          <div className="w-full min-w-0 max-w-full">
-            <PortfolioCard
-              balances={showBalances ? balances : {}}
-              balancesLoading={loading}
-              prices={prices}
-            />
-          </div>
-        )}
+        <div className="w-full min-w-0 max-w-full">
+          <PortfolioCard
+            balances={showBalances ? balances : {}}
+            balancesLoading={loading}
+            prices={prices}
+          />
+        </div>
 
       </main>
     </div>

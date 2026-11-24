@@ -1,3 +1,4 @@
+import { ENV } from '../config/env';
 import type { TokenRef } from './tokenLogos';
 
 /**
@@ -30,9 +31,9 @@ export interface ExploreToken {
 }
 
 export const EXPLORE_TOKENS: ExploreToken[] = [
-  { slug: 'btc', symbol: 'BTC', name: 'Bitcoin', pair: 'BTCUSDT', tokenId: 'TBTC', logo: { family: 'bitcoin' } },
+  { slug: 'btc', symbol: 'BTC', name: 'Bitcoin', pair: 'BTCUSDT', logo: { family: 'bitcoin' } },
   { slug: 'eth', symbol: 'ETH', name: 'Ether', pair: 'ETHUSDT', tokenId: 'ETH', logo: { family: 'evm', chainId: 1, address: null } },
-  { slug: 'usdt', symbol: 'USDT', name: 'Tether USD', pair: 'USDCUSDT', invert: true, logo: { family: 'evm', chainId: 1, address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' } },
+  { slug: 'usdt', symbol: 'USDT', name: 'Tether USD', pair: 'USDCUSDT', invert: true, ...(ENV.usdtAddress ? { tokenId: 'USDT' } : {}), logo: { family: 'evm', chainId: 1, address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' } },
   { slug: 'xrp', symbol: 'XRP', name: 'XRP', pair: 'XRPUSDT', logo: { family: 'native', folder: 'ripple' } },
   { slug: 'bnb', symbol: 'BNB', name: 'BNB', pair: 'BNBUSDT', logo: { family: 'evm', chainId: 56, address: null } },
   { slug: 'sol', symbol: 'SOL', name: 'Solana', pair: 'SOLUSDT', logo: { family: 'solana', mint: null } },

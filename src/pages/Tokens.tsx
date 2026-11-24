@@ -1,23 +1,16 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { formatUnits } from 'viem';
 import { Link } from '../lib/router';
 import { ValueChart } from '../components/PortfolioCard';
-import ChainComingSoon from '../components/ChainComingSoon';
-import BitcoinSwapCard, { fetchBtcBalance } from '../components/BitcoinSwapCard';
-import SolanaSwapCard from '../components/SolanaSwapCard';
 import Navbar from '../components/Navbar';
 import PriceTicker from '../components/PriceTicker';
 import Sparkline from '../components/Sparkline';
 import SwapCard from '../components/SwapCard';
 import TokenLogo from '../components/TokenLogo';
-import { useChain } from '../chains/ChainContext';
 import { ACTIVE_CHAIN } from '../config/chains';
 import { getToken, isTokenConfigured } from '../config/tokens';
 import { useBalances } from '../hooks/useBalances';
 import { useMarket } from '../hooks/useMarket';
-import { useSolana } from '../hooks/useSolana';
-import { SOLANA_RECOMMENDED } from '../lib/solanaWallets';
-import { SOL_DECIMALS } from '../lib/solana';
 import { useSparklines } from '../hooks/useSparklines';
 import { useTokenChart } from '../hooks/useTokenChart';
 import { useWallet } from '../hooks/useWallet';
@@ -53,9 +46,7 @@ export default function Tokens({ path }: { path: string }) {
   const slug = path.startsWith('/tokens/') ? decodeURIComponent(path.slice('/tokens/'.length)).split(/[/?]/)[0] : '';
   const market = useMarket();
   const { account, isConnected, isWrongNetwork } = useWallet();
-  const { chain } = useChain();
-  const evm = chain.family === 'evm';
-  const ready = isConnected && !isWrongNetwork && evm;
+  const ready = isConnected && !isWrongNetwork;
   const { balances, loading: balancesLoading, refresh } = useBalances(account, ready);
   const token = slug ? findExploreToken(slug) : undefined;
   const sparks = useSparklines();
@@ -83,7 +74,6 @@ export default function Tokens({ path }: { path: string }) {
             balances={balances}
             balancesLoading={balancesLoading}
             refreshBalances={refresh}
-            evm={evm}
           />
         ) : (
           <>
@@ -171,16 +161,14 @@ function TokenList({ tokens, market, sparks }: { tokens: ExploreToken[]; market:
 
 /* ────────────────────────────── DETAIL ────────────────────────────── */
 
-function TokenDetail({ token, quote, marketLoading, balances, balancesLoading, refreshBalances, evm }: {
+function TokenDetail({ token, quote, marketLoading, balances, balancesLoading, refreshBalances }: {
   token: ExploreToken;
   quote: Quote | null | undefined;
   marketLoading: boolean;
   balances: Record<string, bigint>;
   balancesLoading: boolean;
   refreshBalances: () => Promise<void>;
-  evm: boolean;
 }) {
-  const { chain } = useChain();
   const [range, setRange] = useState<ChartRange>('live');
   const { points, loading: chartLoading, error: chartError } = useTokenChart(token, range, quote?.price ?? null);
 
@@ -272,12 +260,12 @@ function TokenDetail({ token, quote, marketLoading, balances, balancesLoading, r
 
         {/* RIGHT: the same swap box as the home page */}
         <div className="min-w-0">
-          {!evm ? (
-            chain.family === 'bitcoin' ? <BitcoinSwapCard key={token.slug} initialFromSymbol={token.symbol} /> : chain.family === 'solana' ? <SolanaSwapCard key={token.slug} initialFromSymbol={token.symbol} /> : <ChainComingSoon chain={chain} />
+          {token.tokenId ? (
+            <SwapCard key={token.slug} initialFromId={token.tokenId} onSwapped={() => void refreshBalances()} />
           ) : (
-            <>
-              <SwapCard key={token.slug} initialFromId={token.tokenId} onSwapped={() => void refreshBalances()} />
-            </>
+            <div className="glass rounded-2xl p-5 text-sm text-slate-600">
+              {token.symbol} balances and swaps are not available in this EVM wallet.
+            </div>
           )}
         </div>
       </div>
@@ -300,116 +288,28 @@ function Empty({ text }: { text: string }) {
 
 const CARD_BTN = 'rounded-xl bg-white px-4 py-2 font-display text-sm font-semibold text-horizon transition hover:bg-white/90 disabled:opacity-70 focus-ring';
 
-/** Solana "Connect Wallet" button: lists the detected Solana wallets (same choices as the navbar button). */
-function SolanaConnectButton() {
-  const { wallets, connecting, connect } = useSolana();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const close = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
-  }, []);
-  const detected = new Set(wallets.map((w) => w.name.toLowerCase()));
-  const missing = SOLANA_RECOMMENDED.filter((r) => !detected.has(r.name.toLowerCase()));
-  return (
-    <div className="relative" ref={ref}>
-      <button type="button" className={CARD_BTN} disabled={connecting} onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open}>
-        {connecting ? 'Check your wallet…' : 'Connect Wallet'}
-      </button>
-      {open && (
-        <div role="menu" className="glass absolute right-0 top-12 z-50 w-[min(86vw,18rem)] max-h-72 overflow-y-auto rounded-2xl p-2 text-sm text-cloud">
-          <p className="px-2.5 pb-1 pt-1 text-xs uppercase tracking-wider text-slate-500">Solana wallets</p>
-          {wallets.map((w) => (
-            <button key={w.id} type="button" disabled={connecting} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-blue-50 disabled:opacity-60 focus-ring" onClick={() => { setOpen(false); void connect(w); }}>
-              {w.icon ? <img src={w.icon} alt="" width={28} height={28} className="h-7 w-7 rounded-lg" /> : <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100/70">👛</span>}
-              <span className="font-medium">{w.name}</span>
-              <span className="ml-auto text-xs text-emerald-600">Detected</span>
-            </button>
-          ))}
-          {missing.map((r) => (
-            <a key={r.name} href={r.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl px-2.5 py-2 text-slate-600 hover:bg-blue-50 focus-ring">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100/70">⬇</span>
-              <span>{r.name}</span>
-              <span className="ml-auto text-xs text-horizon">Install</span>
-            </a>
-          ))}
-          <p className="px-2.5 pb-1 pt-2 text-xs leading-relaxed text-slate-500">After installing a wallet, reload this page. Set the wallet to Devnet.</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * "Your balance" card: how much of this token the connected wallet holds.
- * Works for EVERY token in the Explore list and follows the selected network:
- * Ethereum (EVM wallet), Solana (Solana wallet) or Bitcoin (Bitcoin wallet).
- * Not connected -> a Connect Wallet button for that network. Connected -> the balance (0 if the wallet holds none).
- */
+/** Show the connected EVM wallet's balance for the listed token, if it has an EVM token configured. */
 function BalanceCard({ token, quote, balances, loading }: { token: ExploreToken; quote: Quote | null | undefined; balances: Record<string, bigint>; loading: boolean }) {
-  const { chain } = useChain();
-  const { isConnected, isConnecting, isWrongNetwork, connect, switchNetwork, activeBitcoin, connectFamily, connectingFamily } = useWallet();
-  const sol = useSolana();
-  const family = chain.family;
-
-  // Bitcoin balance (only BTC itself has one on this network)
-  const [btcBal, setBtcBal] = useState<number | null>(null);
-  useEffect(() => {
-    if (family !== 'bitcoin' || !activeBitcoin || token.symbol !== 'BTC') { setBtcBal(null); return; }
-    const ctrl = new AbortController();
-    void fetchBtcBalance(activeBitcoin, ctrl.signal).then((b) => { if (!ctrl.signal.aborted) setBtcBal(b); });
-    return () => ctrl.abort();
-  }, [family, activeBitcoin, token.symbol]);
-
+  const { isConnected, isConnecting, isWrongNetwork, connect, switchNetwork } = useWallet();
   const own = token.tokenId ? getToken(token.tokenId) : null;
   const evmBal = own ? balances[own.id] : undefined;
 
-  const connected = family === 'evm' ? isConnected : family === 'solana' ? !!sol.address : family === 'bitcoin' ? !!activeBitcoin : false;
-
-  let main: ReactNode;
-  let sub: ReactNode = ' ';
-  let action: ReactNode = null;
-
-  if (!connected) {
-    main = '—';
-    sub = 'Connect your wallet to see your balance';
-    if (family === 'solana') action = <SolanaConnectButton />;
-    else if (family === 'bitcoin') action = <button type="button" onClick={() => void connectFamily('bitcoin')} disabled={connectingFamily === 'bitcoin'} className={CARD_BTN}>{connectingFamily === 'bitcoin' ? 'Check your wallet…' : 'Connect Wallet'}</button>;
-    else if (family === 'evm') action = <button type="button" onClick={() => void connect()} disabled={isConnecting} className={CARD_BTN}>{isConnecting ? 'Check your wallet…' : 'Connect Wallet'}</button>;
-    else sub = `${chain.name} wallets are not supported yet`;
-  } else if (family === 'evm') {
+  let main = '—';
+  let sub = 'Connect your wallet to see your balance';
+  if (isConnected) {
     if (isWrongNetwork) {
-      main = '—';
       sub = `Switch to ${ACTIVE_CHAIN.name} to see your balance`;
-      action = <button type="button" onClick={() => void switchNetwork()} className={CARD_BTN}>Switch Network</button>;
-    } else if (!own || !isTokenConfigured(own)) {
-      main = `0 ${token.symbol}`; // this token does not exist on the test network
+    } else if (!own) {
+      main = '—';
+      sub = `${token.symbol} balances are not available in this EVM wallet`;
+    } else if (!isTokenConfigured(own)) {
+      main = `0 ${token.symbol}`;
     } else if (evmBal === undefined) {
       main = loading ? 'Loading…' : '—';
     } else {
       const usd = quote ? Number(formatUnits(evmBal, own.decimals)) * quote.price : null;
       main = `${formatAmount(evmBal, own.decimals, 6)} ${own.symbol}`;
-      sub = usd !== null ? `≈ ${formatUsd(usd)}${own.id === 'TBTC' ? ' (test token, valued at the real BTC price)' : ''}` : ' ';
-    }
-  } else if (family === 'solana') {
-    const portfolio = sol.portfolio;
-    if (!portfolio) {
-      main = sol.loading ? 'Loading…' : '—';
-    } else {
-      const raw = token.symbol === 'SOL' ? portfolio.sol : portfolio.tokens.find((t) => t.symbol === token.symbol)?.amount ?? 0n;
-      const decimals = token.symbol === 'SOL' ? SOL_DECIMALS : portfolio.tokens.find((t) => t.symbol === token.symbol)?.decimals ?? 6;
-      main = `${formatAmount(raw, decimals, 6)} ${token.symbol}`;
-      const usd = quote ? Number(formatUnits(raw, decimals)) * quote.price : null;
-      sub = raw > 0n && usd !== null ? `≈ ${formatUsd(usd)}` : ' ';
-    }
-  } else {
-    // Bitcoin network
-    if (token.symbol === 'BTC') {
-      main = btcBal === null ? 'Loading…' : `${btcBal.toLocaleString('en-US', { maximumFractionDigits: 6 })} BTC`;
-      sub = btcBal !== null && quote ? `≈ ${formatUsd(btcBal * quote.price)}` : ' ';
-    } else {
-      main = `0 ${token.symbol}`;
+      sub = usd !== null ? `≈ ${formatUsd(usd)}` : ' ';
     }
   }
 
@@ -421,7 +321,13 @@ function BalanceCard({ token, quote, balances, loading }: { token: ExploreToken;
           <p className="mt-1 break-all font-display text-3xl font-bold tabular-nums sm:text-4xl">{main}</p>
           <p className="mt-1 text-sm tabular-nums text-white/85">{sub}</p>
         </div>
-        {action}
+        {!isConnected ? (
+          <button type="button" onClick={() => void connect()} disabled={isConnecting} className={CARD_BTN}>
+            {isConnecting ? 'Check your wallet…' : 'Connect Wallet'}
+          </button>
+        ) : isWrongNetwork ? (
+          <button type="button" onClick={() => void switchNetwork()} className={CARD_BTN}>Switch Network</button>
+        ) : null}
       </div>
     </section>
   );

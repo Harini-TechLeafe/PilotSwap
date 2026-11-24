@@ -1,5 +1,7 @@
 import { explorerTxUrl } from '../config/chains';
 import type { TxState } from '../hooks/useSwap';
+import LoadingDots from './LoadingDots';
+import PilotLoader from './PilotLoader';
 
 const TITLES: Record<TxState['step'], Record<TxState['phase'], string>> = {
   approve: { wallet: 'Confirm the approval in MetaMask', pending: 'Approval pending on-chain', success: 'Approval confirmed', error: 'Approval failed' },
@@ -7,7 +9,7 @@ const TITLES: Record<TxState['step'], Record<TxState['phase'], string>> = {
   send: { wallet: 'Confirm the transfer in your wallet', pending: 'Transfer pending on-chain', success: 'Transfer sent', error: 'Transfer failed' },
 };
 
-export default function TransactionStatus({ tx, onDismiss }: { tx: TxState; onDismiss: () => void }) {
+export default function TransactionStatus({ tx, onDismiss, note }: { tx: TxState; onDismiss: () => void; note?: string | null }) {
   const link = tx.hash ? explorerTxUrl(tx.hash) : null;
   const working = tx.phase === 'wallet' || tx.phase === 'pending';
   const tone = tx.phase === 'success' ? 'border-emerald-400/40 bg-emerald-400/5' : tx.phase === 'error' ? 'border-rose-400/40 bg-rose-400/5' : 'border-horizon/30 bg-horizon/5';
@@ -19,14 +21,10 @@ export default function TransactionStatus({ tx, onDismiss }: { tx: TxState; onDi
         {!working && <button onClick={onDismiss} aria-label="Dismiss" className="text-slate-500 hover:text-cloud">✕</button>}
       </div>
 
-      {working && (
-        <div className="relative mt-4 mb-1" aria-hidden>
-          <div className="flight-track" />
-          <svg className="flight-plane absolute -top-[10px] left-0" width="22" height="22" viewBox="0 0 32 32"><path d="M4 16 28 6l-7 20-4.5-7.5z" fill="#1550E8" /></svg>
-        </div>
-      )}
-      {tx.phase === 'wallet' && <p className="mt-2 text-sm text-slate-600">Waiting for your signature. Nothing is sent until you confirm.</p>}
-      {tx.phase === 'pending' && <p className="mt-2 text-sm text-slate-600">Submitted. Waiting for blockchain confirmation…</p>}
+      {working && <PilotLoader label={tx.phase === 'wallet' ? 'Waiting for your wallet' : 'Confirming on-chain, please wait'} />}
+      {tx.phase === 'wallet' && <p className="mt-2 text-sm text-slate-600">Waiting for your signature<LoadingDots /> Nothing is sent until you confirm.</p>}
+      {tx.phase === 'pending' && <p className="mt-2 text-sm text-slate-600">Submitted. Waiting for blockchain confirmation<LoadingDots /></p>}
+      {tx.phase === 'pending' && note && <p className="mt-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">{note}</p>}
       {tx.phase === 'error' && <p className="mt-2 text-sm text-rose-700">{tx.message}</p>}
 
       {tx.hash && (

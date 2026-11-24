@@ -1,6 +1,7 @@
+import { waitForReceiptPatiently } from '../lib/receipt';
 import { useMemo, useState } from 'react';
 import { erc20Abi, formatUnits, getAddress, isAddress, parseEther, type Address, type Hex, type WalletClient } from 'viem';
-import { ACTIVE_CHAIN, explorerTxUrl, publicClient } from '../config/chains';
+import { ACTIVE_CHAIN, NATIVE_SYMBOL, explorerTxUrl, publicClient } from '../config/chains';
 import { getToken, isTokenConfigured } from '../config/tokens';
 import { parseTxError } from '../lib/errors';
 import { parseAmount } from '../lib/format';
@@ -16,13 +17,14 @@ interface Args {
   initialTokenId: string;
 }
 
-/** Send ETH (native transfer) or an ERC-20 (transfer()) from the connected wallet to any address. */
+/** Send the chain's gas coin (ETH / tBNB; native transfer) or an ERC-20 (transfer()) from the connected wallet to any address. */
 export function useSend({ account, walletClient, ready, balances, refreshBalances, initialTokenId }: Args) {
   const { push } = useToast();
   const [tokenId, setTokenId] = useState(initialTokenId);
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
   const [tx, setTx] = useState<TxState | null>(null);
+  const [pendingNote, setPendingNote] = useState<string | null>(null);
 
   const token = getToken(tokenId);
   const parsed = useMemo(() => parseAmount(amount, token.decimals), [amount, token.decimals]);
@@ -43,15 +45,20 @@ export function useSend({ account, walletClient, ready, balances, refreshBalance
     if (!amount) return 'Enter an amount';
     if (parsed === null || parsed <= 0n) return 'Enter a valid amount';
     if (parsed > (balances[token.id] ?? 0n)) return `Insufficient ${token.symbol} balance`;
-    if ((balances.ETH ?? 0n) === 0n) return 'You need ETH to pay for gas';
+    if ((balances.ETH ?? 0n) === 0n) return `You need ${NATIVE_SYMBOL} to pay for gas`;
     return null;
   }, [ready, account, token, toTrimmed, toValid, amount, parsed, balances]);
 
+  const maxAmount = (() => {
+    const bal = balances[token.id] ?? 0n;
+    const reserve = token.isNative ? parseEther('0.002') : 0n; // leave a little of the gas coin for the fee
+    return formatUnits(bal > reserve ? bal - reserve : 0n, token.decimals);
+  })();
+  const isMax = amount !== '' && amount === maxAmount && maxAmount !== '0';
+  /** MAX works as a toggle: first click fills the maximum, clicking it again clears the amount. */
   const setMax = () => {
     clearFinished();
-    const bal = balances[token.id] ?? 0n;
-    const reserve = token.isNative ? parseEther('0.002') : 0n; // leave a little ETH for the gas fee
-    setAmount(formatUnits(bal > reserve ? bal - reserve : 0n, token.decimals));
+    setAmount(isMax ? '' : maxAmount);
   };
 
   const send = async () => {
@@ -68,7 +75,7 @@ export function useSend({ account, walletClient, ready, balances, refreshBalance
         hash = await walletClient.writeContract({ ...p, chain: ACTIVE_CHAIN });
       }
       setTx({ step: 'send', phase: 'pending', hash });
-      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      const receipt = await waitForReceiptPatiently(publicClient, hash, { onNote: setPendingNote });
       if (receipt.status !== 'success') throw new Error('Transfer reverted on-chain.');
       setTx({ step: 'send', phase: 'success', hash });
       push({ kind: 'success', title: `${amount} ${token.symbol} sent`, message: `To ${recipient.slice(0, 6)}…${recipient.slice(-4)}`, href: explorerTxUrl(hash) });
@@ -93,7 +100,7 @@ export function useSend({ account, walletClient, ready, balances, refreshBalance
     busy,
     tx,
     setTx,
-    setMax,
+    setMax, isMax, pendingNote,
     send,
   };
 }

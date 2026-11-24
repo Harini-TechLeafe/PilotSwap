@@ -1,19 +1,8 @@
 import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createWalletClient, custom, getAddress, type Address, type EIP1193Provider, type WalletClient } from 'viem';
-import { ACTIVE_CHAIN, ADD_CHAIN_PARAMS, CHAIN_ID_HEX } from '../config/chains';
+import { ACTIVE_CHAIN, getAddChainParams, SUPPORTED_CHAINS } from '../config/chains';
 import { useToast } from '../components/Toast';
-import {
-  accountsForFamily,
-  connectStdWallet,
-  disconnectStdWallet,
-  findStdWallet,
-  onWalletsChange,
-  startWalletStandard,
-  subscribeStdWallet,
-} from '../lib/walletStandard';
 import { addLegacyWalletIfNeeded, getDiscoveredWallets, onDiscoveryChange, startDiscovery, type DiscoveredWallet } from '../lib/eip6963';
-
-export type NonEvmFamily = 'solana' | 'bitcoin';
 
 export const METAMASK_MISSING = 'No browser wallet found. Please install MetaMask or Trust Wallet to continue.';
 export const WRONG_NETWORK = 'Wrong network. Please switch to the supported network.';
@@ -40,22 +29,12 @@ export interface WalletState {
   connectWith: (wallet: DiscoveredWallet) => Promise<void>;
   /** Every Ethereum address MetaMask has shared with this site (active one first). */
   evmAccounts: Address[];
-  solanaAccounts: string[];
-  bitcoinAccounts: string[];
-  activeSolana: string | null;
-  activeBitcoin: string | null;
-  /** Does this browser's MetaMask expose a Solana / Bitcoin wallet to websites? */
-  solanaAvailable: boolean;
-  bitcoinAvailable: boolean;
-  /** Which non-EVM family is currently waiting for the MetaMask popup. */
-  connectingFamily: NonEvmFamily | null;
   isSwitching: boolean;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
-  switchNetwork: () => Promise<void>;
-  connectFamily: (family: NonEvmFamily) => Promise<void>;
+  switchNetwork: (chainId?: number, quiet?: boolean) => Promise<boolean>;
   /** Ask MetaMask to make `address` the active account, and follow whatever MetaMask ends up selecting. */
-  switchAccount: (family: 'evm' | NonEvmFamily, address: string) => Promise<void>;
+  switchAccount: (address: string) => Promise<void>;
 }
 
 function useWalletState(): WalletState {
@@ -68,32 +47,7 @@ function useWalletState(): WalletState {
   const [chainId, setChainId] = useState<number | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [evmAccounts, setEvmAccounts] = useState<Address[]>([]);
-  const [connectingFamily, setConnectingFamily] = useState<NonEvmFamily | null>(null);
   const [isSwitching, setIsSwitching] = useState(false);
-  const [preferredSol, setPreferredSol] = useState<string | null>(null);
-  const [preferredBtc, setPreferredBtc] = useState<string | null>(null);
-  // Bumps whenever the Wallet Standard registry or a wallet's account list changes.
-  const [stdTick, setStdTick] = useState(0);
-
-  // Discover Solana / Bitcoin wallets (Wallet Standard) and re-render when their accounts change.
-  useEffect(() => {
-    startWalletStandard();
-    const off = onWalletsChange(() => setStdTick((t) => t + 1));
-    return off;
-  }, []);
-
-  const solWallet = useMemo(() => findStdWallet('solana', selected?.info.name ?? null), [stdTick, selected]); // eslint-disable-line react-hooks/exhaustive-deps
-  const btcWallet = useMemo(() => findStdWallet('bitcoin', selected?.info.name ?? null), [stdTick, selected]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    const offs = [solWallet, btcWallet].filter(Boolean).map((w) => subscribeStdWallet(w!, () => setStdTick((t) => t + 1)));
-    return () => offs.forEach((o) => o());
-  }, [solWallet, btcWallet]);
-
-  const solanaAccounts = useMemo(() => accountsForFamily(solWallet, 'solana'), [solWallet, stdTick]); // eslint-disable-line react-hooks/exhaustive-deps
-  const bitcoinAccounts = useMemo(() => accountsForFamily(btcWallet, 'bitcoin'), [btcWallet, stdTick]); // eslint-disable-line react-hooks/exhaustive-deps
-  const activeSolana = preferredSol && solanaAccounts.includes(preferredSol) ? preferredSol : solanaAccounts[0] ?? null;
-  const activeBitcoin = preferredBtc && bitcoinAccounts.includes(preferredBtc) ? preferredBtc : bitcoinAccounts[0] ?? null;
 
   // Discover installed wallets (EIP-6963). Old wallets without it fall back to window.ethereum.
   useEffect(() => {
@@ -176,13 +130,13 @@ function useWalletState(): WalletState {
       try {
         const accs = (await p.request({ method: 'eth_requestAccounts' })) as string[];
         if (!accs.length) throw new Error('No account returned');
+        setPickerOpen(false);
         localStorage.removeItem(DISCONNECT_FLAG);
         localStorage.setItem(WALLET_KEY, w.info.rdns);
         setSelected(w);
         setEvmAccounts(accs.map((a) => getAddress(a)));
         setAccount(getAddress(accs[0]));
         setChainId(parseInt((await p.request({ method: 'eth_chainId' })) as string, 16));
-        setPickerOpen(false);
         push({ kind: 'success', title: `${name} connected` });
       } catch (e: any) {
         if (e?.code === 4001) push({ kind: 'error', title: 'Connection rejected', message: 'You declined the connection request.' });
@@ -204,87 +158,53 @@ function useWalletState(): WalletState {
     localStorage.setItem(DISCONNECT_FLAG, '1');
     setAccount(null);
     setEvmAccounts([]);
-    setPreferredSol(null);
-    setPreferredBtc(null);
-    if (solWallet) void disconnectStdWallet(solWallet);
-    if (btcWallet && btcWallet !== solWallet) void disconnectStdWallet(btcWallet);
     try {
       // Newer MetaMask versions support revoking site permissions; ignore if unsupported.
       await provider?.request({ method: 'wallet_revokePermissions', params: [{ eth_accounts: {} }] });
     } catch {
       /* not supported: the app-level disconnect is enough */
     }
-  }, [provider, solWallet, btcWallet]);
+  }, [provider]);
 
   /** Only runs when the user clicks "Switch Network". Never called automatically. */
-  const switchNetwork = useCallback(async () => {
-    if (!provider) return;
+  const switchNetwork = useCallback(async (targetChainId = ACTIVE_CHAIN.id, quiet = false) => {
+    if (!provider) return false;
+    const targetChain = SUPPORTED_CHAINS[targetChainId];
+    if (!targetChain) {
+      if (!quiet) push({ kind: 'error', title: 'Unsupported network', message: `Chain ID ${targetChainId} is not configured in PilotSwap.` });
+      return false;
+    }
+    const chainIdHex = `0x${targetChainId.toString(16)}`;
     try {
-      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_ID_HEX }] });
+      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: chainIdHex }] });
+      return true;
     } catch (e: any) {
       if (e?.code === 4902 || e?.data?.originalError?.code === 4902) {
         try {
-          await provider.request({ method: 'wallet_addEthereumChain', params: [ADD_CHAIN_PARAMS] });
+          await provider.request({ method: 'wallet_addEthereumChain', params: [getAddChainParams(targetChainId)] });
+          await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: chainIdHex }] });
+          return true;
         } catch (e2: any) {
-          if (e2?.code !== 4001) push({ kind: 'error', title: 'Could not add network', message: e2?.message });
+          if (!quiet && e2?.code !== 4001) push({ kind: 'error', title: 'Could not switch network', message: e2?.message });
         }
       } else if (e?.code !== 4001) {
-        push({ kind: 'error', title: 'Could not switch network', message: e?.message });
+        if (!quiet) push({ kind: 'error', title: 'Could not switch network', message: e?.message });
       }
+      return false;
     }
   }, [provider, push]);
 
-  /** Connect MetaMask's Solana or Bitcoin side (opens a MetaMask popup). */
-  const connectFamily = useCallback(
-    async (family: NonEvmFamily) => {
-      const w = family === 'solana' ? solWallet : btcWallet;
-      if (!w) {
-        push({ kind: 'info', title: `${family === 'solana' ? 'Solana' : 'Bitcoin'} not available`, message: 'Your wallet does not expose this network to websites yet. Update MetaMask and reload.' });
-        return;
-      }
-      setConnectingFamily(family);
-      try {
-        const addrs = await connectStdWallet(w, family);
-        setStdTick((t) => t + 1);
-        if (!addrs.length) push({ kind: 'info', title: 'No account shared', message: 'Select at least one account in your wallet.' });
-        else push({ kind: 'success', title: `${family === 'solana' ? 'Solana' : 'Bitcoin'} connected` });
-      } catch (e: any) {
-        if (e?.code === 4001 || /reject|denied|declin/i.test(e?.message ?? '')) push({ kind: 'error', title: 'Connection rejected', message: 'You declined the request in your wallet.' });
-        else push({ kind: 'error', title: 'Could not connect', message: e?.message ?? 'Unknown error' });
-      } finally {
-        setConnectingFamily(null);
-      }
-    },
-    [solWallet, btcWallet, push],
-  );
-
-  /**
-   * A website cannot silently change MetaMask's selected account (a wallet security rule).
-   * What it CAN do is open MetaMask's own account picker. We open it here, then follow whatever
-   * MetaMask reports afterwards, so PilotSwap and MetaMask always end up on the same address.
-   */
   const switchAccount = useCallback(
-    async (family: 'evm' | NonEvmFamily, address: string) => {
+    async (address: string) => {
       setIsSwitching(true);
       try {
-        if (family === 'evm') {
-          if (!provider) return;
-          push({ kind: 'info', title: 'Confirm in your wallet', message: `Select ${address.slice(0, 6)}…${address.slice(-4)} in the wallet popup.` });
-          await provider.request({ method: 'wallet_requestPermissions', params: [{ eth_accounts: {} }] });
-          const accs = (await provider.request({ method: 'eth_accounts' })) as string[];
-          if (accs.length) {
-            setEvmAccounts(accs.map((a) => getAddress(a)));
-            setAccount(getAddress(accs[0]));
-          }
-        } else {
-          const w = family === 'solana' ? solWallet : btcWallet;
-          if (!w) return;
-          push({ kind: 'info', title: 'Confirm in your wallet', message: `Select ${address.slice(0, 4)}…${address.slice(-4)} in the wallet popup.` });
-          const addrs = await connectStdWallet(w, family);
-          const next = addrs.includes(address) ? address : addrs[0] ?? null;
-          if (family === 'solana') setPreferredSol(next);
-          else setPreferredBtc(next);
-          setStdTick((t) => t + 1);
+        if (!provider) return;
+        push({ kind: 'info', title: 'Confirm in your wallet', message: `Select ${address.slice(0, 6)}…${address.slice(-4)} in the wallet popup.` });
+        await provider.request({ method: 'wallet_requestPermissions', params: [{ eth_accounts: {} }] });
+        const accs = (await provider.request({ method: 'eth_accounts' })) as string[];
+        if (accs.length) {
+          setEvmAccounts(accs.map((a) => getAddress(a)));
+          setAccount(getAddress(accs[0]));
         }
       } catch (e: any) {
         if (e?.code !== 4001 && !/reject|denied|declin/i.test(e?.message ?? '')) {
@@ -295,12 +215,12 @@ function useWalletState(): WalletState {
         setIsSwitching(false);
       }
     },
-    [provider, solWallet, btcWallet, push],
+    [provider, push],
   );
 
   const walletClient = useMemo<WalletClient | null>(
-    () => (provider && account ? createWalletClient({ account, chain: ACTIVE_CHAIN, transport: custom(provider as unknown as EIP1193Provider) }) : null),
-    [provider, account],
+    () => (provider && account && chainId === ACTIVE_CHAIN.id ? createWalletClient({ account, chain: ACTIVE_CHAIN, transport: custom(provider as unknown as EIP1193Provider) }) : null),
+    [provider, account, chainId],
   );
 
   return {
@@ -318,18 +238,10 @@ function useWalletState(): WalletState {
     closePicker,
     connectWith,
     evmAccounts,
-    solanaAccounts,
-    bitcoinAccounts,
-    activeSolana,
-    activeBitcoin,
-    solanaAvailable: !!solWallet,
-    bitcoinAvailable: !!btcWallet,
-    connectingFamily,
     isSwitching,
     connect,
     disconnect,
     switchNetwork,
-    connectFamily,
     switchAccount,
   };
 }

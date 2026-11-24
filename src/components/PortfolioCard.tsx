@@ -5,8 +5,9 @@ import { usePortfolioHistory, type Point, type Range } from '../hooks/usePortfol
 import type { TokenPrice } from '../hooks/usePrices';
 import { useWallet } from '../hooks/useWallet';
 import { useTheme } from '../hooks/useTheme';
+import { ACTIVE_CHAIN, IS_MAINNET, chainName } from '../config/chains';
 import { formatAmount, formatUsd } from '../lib/format';
-import type { TokenRef } from '../lib/tokenLogos';
+import { LOGO_REFS } from '../lib/tokenLogoRefs';
 import TokenLogo from './TokenLogo';
 
 /**
@@ -14,18 +15,7 @@ import TokenLogo from './TokenLogo';
  * Separate from the token icon colours on purpose: ETH and WETH icons are nearly the same hue.
  * Every colour is also paired with the token's name, so colour is never the only cue.
  */
-const SERIES: Record<string, string> = { ETH: '#2a78d6', WETH: '#e87ba4', USDC: '#1baf7a', DAI: '#4a3aa7', TBTC: '#eb6834' };
-/**
- * Real logos. These are testnet tokens, so each one shows the logo of the real asset it mirrors:
- * ETH → Ethereum, WETH/USDC/DAI → their Ethereum mainnet contracts, tBTC → Bitcoin.
- */
-const LOGO_REFS: Record<string, TokenRef> = {
-  ETH: { family: 'evm', chainId: 1, address: null },
-  WETH: { family: 'evm', chainId: 1, address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2' },
-  USDC: { family: 'evm', chainId: 1, address: '0xA0b86991c6218b36c1d19D4a2E9Eb0cE3606eB48' },
-  DAI: { family: 'evm', chainId: 1, address: '0x6B175474E89094C44Da98b954EedeAC495271d0F' },
-  TBTC: { family: 'bitcoin' },
-};
+const SERIES: Record<string, string> = { ETH: '#2a78d6', WETH: '#e87ba4', USDC: '#1baf7a', DAI: '#4a3aa7', USDT: '#26a17b' };
 const LINE = '#1550E8'; // brand blue for the chart line
 
 const RANGES: { id: Range; label: string; words: string }[] = [
@@ -145,7 +135,7 @@ export default function PortfolioCard({ balances, balancesLoading, prices }: Pro
             )}
           </div>
           <p className="mt-2 text-xs text-slate-500">
-            The line shows what the tokens you hold <b>now</b> were worth at each moment. These are testnet tokens shown at real market prices (tBTC uses the BTC price), so it is a preview, not real money.
+            The line shows what the tokens you hold <b>now</b> were worth at each moment. {IS_MAINNET ? `These are real tokens on ${chainName(ACTIVE_CHAIN.id)}, valued at market prices.` : 'These are testnet tokens shown at real market prices, so it is a preview, not real money.'}
           </p>
         </div>
       </div>

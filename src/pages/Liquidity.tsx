@@ -1,11 +1,12 @@
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Navbar from '../components/Navbar';
 import LiquidityPairLogo, {
   type PairToken,
 } from '../components/LiquidityPairLogo';
 import type { TokenRef } from '../lib/tokenLogos';
 import { useWallet } from '../hooks/useWallet';
+import { ACTIVE_CHAIN } from '../config/chains';
 import {
   AddLiquidityButton,
   AddLiquidityDrawer,
@@ -16,7 +17,7 @@ import {
 // TYPES
 // =====================================================
 
-type ChainId = 'evm' | 'solana' | 'cardano';
+type ChainId = 'evm';
 
 interface PoolToken {
   s: string;
@@ -46,7 +47,6 @@ const CHAIN_META: Record<
   {
     label: string;
     badge: string;
-    family: 'EVM' | 'Non-EVM';
     symbol: string;
     usdRate: number;
     badgeClass: string;
@@ -55,26 +55,9 @@ const CHAIN_META: Record<
   evm: {
     label: 'Ethereum',
     badge: 'ETH',
-    family: 'EVM',
     symbol: '$',
     usdRate: 1,
     badgeClass: 'bg-altitude/15 text-altitude',
-  },
-  solana: {
-    label: 'Solana',
-    badge: 'SOL',
-    family: 'Non-EVM',
-    symbol: '$',
-    usdRate: 1,
-    badgeClass: 'bg-emerald-400/15 text-emerald-600',
-  },
-  cardano: {
-    label: 'Cardano',
-    badge: 'ADA',
-    family: 'Non-EVM',
-    symbol: '₳',
-    usdRate: 0.45,
-    badgeClass: 'bg-horizon/15 text-horizon',
   },
 };
 
@@ -93,50 +76,9 @@ const evmTok = (
   token: { family: 'evm', chainId, address },
 });
 
-const solTok = (
-  s: string,
-  name: string,
-  mint: string | null
-): PoolToken => ({
-  s,
-  name,
-  token: { family: 'solana', mint },
-});
-
-const adaTok = (
-  s: string,
-  name: string,
-  policyId: string | null = '',
-  assetNameHex = ''
-): PoolToken => ({
-  s,
-  name,
-  token: { family: 'cardano', policyId, assetNameHex },
-});
-
 // =====================================================
 // TOKEN DEFINITIONS
 // =====================================================
-
-const ADA = adaTok('ADA', 'Cardano', null);
-
-const SNEK = adaTok(
-  'SNEK',
-  'Snek',
-  '279c909f348e533da5808898f87f9a14bb2c3dfbbacccd631d927a3f',
-  '534e454b'
-);
-
-const HOSKY = adaTok(
-  'HOSKY',
-  'Hosky',
-  'a0028f350aaabe0545fdcb56b039bfb08e4bb4d8c4d7c3c7d481c235',
-  '484f534b59'
-);
-
-const NIGHT = adaTok('NIGHT', 'Night');
-const ASCEND = adaTok('ASCEND', 'Ascend');
-const USDCX = adaTok('USDCx', 'USDCx');
 
 const ETH = evmTok('ETH', 'Ether', null);
 
@@ -164,106 +106,11 @@ const WBTC = evmTok(
   '0x2260FAC5E5542a773Aa44fBfeDf7C193bc2C599'
 );
 
-const SOL = solTok('SOL', 'Solana', null);
-
-const SOL_USDC = solTok(
-  'USDC',
-  'USD Coin',
-  'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
-);
-
-const JUP = solTok(
-  'JUP',
-  'Jupiter',
-  'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN'
-);
-
-const BONK = solTok(
-  'BONK',
-  'Bonk',
-  'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263'
-);
-
 // =====================================================
 // EXISTING POOL DATA - UNCHANGED DEMO VALUES
 // =====================================================
 
 const POOLS: Pool[] = [
-  {
-    id: 'night-ada',
-    a: NIGHT,
-    b: ADA,
-    chain: 'cardano',
-    version: 'V2',
-    fee: '0.3%',
-    address: 'f5808c...713169',
-    tvl: 7.49e6,
-    vol24: 1.81e6,
-    vol7: 17.42e6,
-    fee24: 5.43e3,
-    fee7: 52.25e3,
-    apr: 36.49,
-  },
-  {
-    id: 'snek-ada',
-    a: SNEK,
-    b: ADA,
-    chain: 'cardano',
-    version: 'V2',
-    fee: '1%',
-    address: '279c90...a31b02',
-    tvl: 4.54e6,
-    vol24: 209.16e3,
-    vol7: 2.84e6,
-    fee24: 2.09e3,
-    fee7: 28.43e3,
-    apr: 33.14,
-  },
-  {
-    id: 'hosky-ada',
-    a: HOSKY,
-    b: ADA,
-    chain: 'cardano',
-    version: 'V2',
-    fee: '0.5%',
-    address: 'a0028f...c4e7d1',
-    tvl: 882.16e3,
-    vol24: 188.21e3,
-    vol7: 1.14e6,
-    fee24: 941.05,
-    fee7: 5.72e3,
-    apr: 33.07,
-  },
-  {
-    id: 'ascend-ada',
-    a: ASCEND,
-    b: ADA,
-    chain: 'cardano',
-    version: 'V2',
-    fee: '1%',
-    address: '5d1e04...90bb3a',
-    tvl: 2.14e6,
-    vol24: 108.29e3,
-    vol7: 954.23e3,
-    fee24: 1.08e3,
-    fee7: 9.54e3,
-    apr: 22.96,
-  },
-  {
-    id: 'night-usdcx',
-    a: NIGHT,
-    b: USDCX,
-    chain: 'cardano',
-    version: 'V2',
-    fee: '0.3%',
-    address: 'b7721c...0fa8e5',
-    tvl: 1.04e6,
-    vol24: 96.21e3,
-    vol7: 2.11e6,
-    fee24: 288.62,
-    fee7: 6.34e3,
-    apr: 31.88,
-  },
   {
     id: 'eth-usdc',
     a: ETH,
@@ -323,51 +170,6 @@ const POOLS: Pool[] = [
     fee24: 1.2e3,
     fee7: 7.9e3,
     apr: 7.1,
-  },
-  {
-    id: 'sol-usdc',
-    a: SOL,
-    b: SOL_USDC,
-    chain: 'solana',
-    version: 'CLMM',
-    fee: '0.25%',
-    address: '58oQCh...mWzp',
-    tvl: 18.4e6,
-    vol24: 9.6e6,
-    vol7: 61.3e6,
-    fee24: 24.0e3,
-    fee7: 153.2e3,
-    apr: 47.6,
-  },
-  {
-    id: 'jup-sol',
-    a: JUP,
-    b: SOL,
-    chain: 'solana',
-    version: 'CLMM',
-    fee: '0.3%',
-    address: 'C1MgLo...Aq3d',
-    tvl: 2.7e6,
-    vol24: 840.2e3,
-    vol7: 5.3e6,
-    fee24: 2.5e3,
-    fee7: 15.9e3,
-    apr: 33.8,
-  },
-  {
-    id: 'bonk-sol',
-    a: BONK,
-    b: SOL,
-    chain: 'solana',
-    version: 'V2',
-    fee: '1%',
-    address: 'Hs97TA...kD1r',
-    tvl: 1.35e6,
-    vol24: 455.9e3,
-    vol7: 2.9e6,
-    fee24: 4.6e3,
-    fee7: 29.0e3,
-    apr: 52.2,
   },
 ];
 
@@ -516,24 +318,19 @@ const COLS: { key: SortKey; label: string }[] = [
 // =====================================================
 
 export default function Liquidity() {
-  const {
-    isConnected,
-    connect,
-    isConnecting,
-    activeSolana,
-    activeBitcoin,
-  } = useWallet();
-
-  const anyWalletConnected =
-    isConnected || !!activeSolana || !!activeBitcoin;
+  const { isConnected, isWrongNetwork, chainId, connect, isConnecting } = useWallet();
 
   const [gateOpen, setGateOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const onAddLiquidity = () =>
-    anyWalletConnected
-      ? setDrawerOpen(true)
-      : setGateOpen(true);
+  const walletReady = isConnected && !isWrongNetwork && chainId === ACTIVE_CHAIN.id;
+  const onAddLiquidity = () => walletReady ? setDrawerOpen(true) : setGateOpen(true);
+
+  useEffect(() => {
+    if (!gateOpen || !walletReady) return;
+    setGateOpen(false);
+    setDrawerOpen(true);
+  }, [gateOpen, walletReady]);
 
   const [range, setRange] = useState<Range>('1W');
   const [metric, setMetric] = useState<Metric>('volume');
@@ -542,11 +339,6 @@ export default function Liquidity() {
   const [tab, setTab] = useState<'all' | 'mine'>('all');
   const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
-
-  const [chainFilter, setChainFilter] = useState<
-    'all' | 'EVM' | 'Non-EVM' | ChainId
-  >('all');
 
   const [sort, setSort] = useState<{
     key: SortKey;
@@ -558,20 +350,6 @@ export default function Liquidity() {
 
   const [favs, setFavs] = useState<string[]>(loadFavs);
   const [copied, setCopied] = useState<string | null>(null);
-  const filterRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const close = (e: MouseEvent) => {
-      if (!filterRef.current?.contains(e.target as Node)) {
-        setFilterOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', close);
-
-    return () =>
-      document.removeEventListener('mousedown', close);
-  }, []);
 
   const toggleFav = (id: string) => {
     setFavs((current) => {
@@ -651,14 +429,6 @@ export default function Liquidity() {
 
       const meta = CHAIN_META[p.chain];
 
-      if (
-        chainFilter !== 'all' &&
-        chainFilter !== meta.family &&
-        chainFilter !== p.chain
-      ) {
-        return false;
-      }
-
       return (
         !q ||
         `${p.a.s}-${p.b.s}`.toLowerCase().includes(q) ||
@@ -679,7 +449,7 @@ export default function Liquidity() {
 
       return sort.dir === 'asc' ? v : -v;
     });
-  }, [tab, query, chainFilter, sort]);
+  }, [tab, query, sort]);
 
   const copy = (addr: string) => {
     void navigator.clipboard?.writeText(addr);
@@ -690,18 +460,6 @@ export default function Liquidity() {
       setCopied((c) => (c === addr ? null : c));
     }, 1200);
   };
-
-  const filterOptions: {
-    id: typeof chainFilter;
-    label: string;
-  }[] = [
-    { id: 'all', label: 'All chains' },
-    { id: 'EVM', label: 'EVM only' },
-    { id: 'Non-EVM', label: 'Non-EVM only' },
-    { id: 'evm', label: 'Ethereum' },
-    { id: 'solana', label: 'Solana' },
-    { id: 'cardano', label: 'Cardano' },
-  ];
 
   return (
     <div
@@ -720,7 +478,7 @@ export default function Liquidity() {
             </h1>
 
             <p className="mt-1 break-words text-slate-500">
-              Earn yield from pools across EVM and non-EVM chains
+              Earn yield from EVM liquidity pools
             </p>
           </div>
 
@@ -1058,87 +816,6 @@ export default function Liquidity() {
               </svg>
             </button>
 
-            {/* =============================================
-                FIX 2 - RESPONSIVE FILTER DROPDOWN
-            ============================================= */}
-
-            <div
-              className="relative z-30 shrink-0"
-              ref={filterRef}
-            >
-              <button
-                type="button"
-                onClick={() =>
-                  setFilterOpen((o) => !o)
-                }
-                aria-expanded={filterOpen}
-                aria-haspopup="menu"
-                className="flex h-10 items-center gap-2 rounded-full bg-horizon px-5 text-sm font-medium text-white hover:brightness-110 focus-ring"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <path d="M4 7h16M7 12h10M10 17h4" />
-                </svg>
-
-                Filter
-
-                {chainFilter !== 'all' && (
-                  <span className="h-2 w-2 rounded-full bg-white" />
-                )}
-              </button>
-
-              {/* FILTER MENU */}
-              {filterOpen && (
-                <div
-                  role="menu"
-                  className="
-                    glass
-                    absolute
-                    left-0
-                    right-auto
-                    top-12
-                    z-50
-                    w-48
-                    max-w-[calc(100vw-2rem)]
-                    rounded-2xl
-                    p-2
-                    text-sm
-                    shadow-xl
-                    sm:left-auto
-                    sm:right-0
-                  "
-                >
-                  {filterOptions.map((o) => (
-                    <button
-                      key={o.id}
-                      type="button"
-                      role="menuitemradio"
-                      aria-checked={
-                        chainFilter === o.id
-                      }
-                      onClick={() => {
-                        setChainFilter(o.id);
-                        setFilterOpen(false);
-                      }}
-                      className={`w-full rounded-lg px-3 py-2 text-left hover:bg-blue-50 ${
-                        chainFilter === o.id
-                          ? 'bg-blue-100/70 font-medium'
-                          : ''
-                      }`}
-                    >
-                      {o.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         </div>
 

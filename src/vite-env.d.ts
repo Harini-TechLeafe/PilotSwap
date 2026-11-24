@@ -1,13 +1,62 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
+  readonly VITE_SEPOLIA_CHAIN_ID?: string;
+  readonly VITE_SEPOLIA_RPC_URL?: string;
+  readonly VITE_SEPOLIA_SWAP_ROUTER_ADDRESS?: string;
+  readonly VITE_SEPOLIA_QUOTER_ADDRESS?: string;
+  readonly VITE_SEPOLIA_POSITION_MANAGER_ADDRESS?: string;
+  readonly VITE_SEPOLIA_FACTORY_ADDRESS?: string;
+  readonly VITE_SEPOLIA_WETH_ADDRESS?: string;
+  readonly VITE_SEPOLIA_USDC_ADDRESS?: string;
+  readonly VITE_SEPOLIA_DAI_ADDRESS?: string;
+  readonly VITE_BSC_TESTNET_CHAIN_ID?: string;
   readonly VITE_CHAIN_ID?: string;
   readonly VITE_RPC_URL?: string;
   readonly VITE_SWAP_ROUTER_ADDRESS?: string;
+  readonly VITE_QUOTER_ADDRESS?: string;
+  readonly VITE_POSITION_MANAGER_ADDRESS?: string;
+  readonly VITE_FACTORY_ADDRESS?: string;
   readonly VITE_WETH_ADDRESS?: string;
   readonly VITE_USDC_ADDRESS?: string;
   readonly VITE_DAI_ADDRESS?: string;
-  readonly VITE_TBTC_ADDRESS?: string;
+  readonly VITE_BSC_TESTNET_RPC_URL?: string;
+  readonly VITE_BSC_TESTNET_SWAP_ROUTER_ADDRESS?: string;
+  readonly VITE_BSC_TESTNET_QUOTER_ADDRESS?: string;
+  readonly VITE_BSC_TESTNET_POSITION_MANAGER_ADDRESS?: string;
+  readonly VITE_BSC_TESTNET_FACTORY_ADDRESS?: string;
+  readonly VITE_BSC_TESTNET_WETH_ADDRESS?: string;
+  readonly VITE_BSC_TESTNET_USDC_ADDRESS?: string;
+  readonly VITE_BSC_TESTNET_DAI_ADDRESS?: string;
+  readonly VITE_MAINNET_RPC_URL?: string;
+  readonly VITE_MAINNET_SWAP_ROUTER_ADDRESS?: string;
+  readonly VITE_MAINNET_QUOTER_ADDRESS?: string;
+  readonly VITE_MAINNET_POSITION_MANAGER_ADDRESS?: string;
+  readonly VITE_MAINNET_FACTORY_ADDRESS?: string;
+  readonly VITE_MAINNET_WETH_ADDRESS?: string;
+  readonly VITE_MAINNET_USDC_ADDRESS?: string;
+  readonly VITE_MAINNET_USDC_DECIMALS?: string;
+  readonly VITE_MAINNET_DAI_ADDRESS?: string;
+  readonly VITE_SEPOLIA_USDT_ADDRESS?: string;
+  readonly VITE_SEPOLIA_USDT_DECIMALS?: string;
+  readonly VITE_SEPOLIA_USDC_DECIMALS?: string;
+  readonly VITE_BSC_TESTNET_USDT_ADDRESS?: string;
+  readonly VITE_BSC_TESTNET_USDT_DECIMALS?: string;
+  readonly VITE_BSC_TESTNET_USDC_DECIMALS?: string;
+  readonly VITE_MAINNET_USDT_ADDRESS?: string;
+  readonly VITE_MAINNET_USDT_DECIMALS?: string;
+  readonly VITE_BSC_MAINNET_USDT_ADDRESS?: string;
+  readonly VITE_BSC_MAINNET_USDT_DECIMALS?: string;
+  readonly VITE_BSC_MAINNET_RPC_URL?: string;
+  readonly VITE_BSC_MAINNET_SWAP_ROUTER_ADDRESS?: string;
+  readonly VITE_BSC_MAINNET_QUOTER_ADDRESS?: string;
+  readonly VITE_BSC_MAINNET_POSITION_MANAGER_ADDRESS?: string;
+  readonly VITE_BSC_MAINNET_FACTORY_ADDRESS?: string;
+  readonly VITE_BSC_MAINNET_WETH_ADDRESS?: string;
+  readonly VITE_BSC_MAINNET_USDC_ADDRESS?: string;
+  readonly VITE_BSC_MAINNET_USDC_DECIMALS?: string;
+  readonly VITE_BSC_MAINNET_DAI_ADDRESS?: string;
+  readonly VITE_USDT_ADDRESS?: string;
   readonly VITE_COINGECKO_API_KEY?: string;
 }
 interface ImportMeta {

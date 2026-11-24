@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { ACTIVE_CHAIN } from '../config/chains';
-import { METAMASK_MISSING, useWallet, type NonEvmFamily } from '../hooks/useWallet';
+import { ACTIVE_CHAIN, NATIVE_SYMBOL } from '../config/chains';
+import { METAMASK_MISSING, useWallet } from '../hooks/useWallet';
 import { shortAddress } from '../lib/format';
 
 export const METAMASK_DOWNLOAD = 'https://metamask.io/download/';
@@ -8,8 +8,7 @@ export const METAMASK_DOWNLOAD = 'https://metamask.io/download/';
 export default function ConnectWallet() {
   const {
     account, isConnecting, connect, disconnect, isInstalled, selectedWallet,
-    evmAccounts, solanaAccounts, bitcoinAccounts, activeSolana, activeBitcoin,
-    solanaAvailable, bitcoinAvailable, connectingFamily, isSwitching, connectFamily, switchAccount,
+    evmAccounts, isSwitching, switchAccount,
   } = useWallet();
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -20,17 +19,14 @@ export default function ConnectWallet() {
   };
 
   const sections: {
-    id: 'evm' | NonEvmFamily;
+    id: 'evm';
     label: string;
     badge: string;
     badgeClass: string;
     list: string[];
     active: string | null;
-    available: boolean;
   }[] = [
-    { id: 'evm', label: 'Ethereum', badge: 'ETH', badgeClass: 'bg-altitude/20 text-altitude', list: evmAccounts, active: account, available: true },
-    { id: 'solana', label: 'Solana', badge: 'SOL', badgeClass: 'bg-emerald-400/15 text-emerald-600', list: solanaAccounts, active: activeSolana, available: solanaAvailable },
-    { id: 'bitcoin', label: 'Bitcoin', badge: 'BTC', badgeClass: 'bg-horizon/20 text-horizon', list: bitcoinAccounts, active: activeBitcoin, available: bitcoinAvailable },
+    { id: 'evm', label: ACTIVE_CHAIN.name, badge: NATIVE_SYMBOL, badgeClass: 'bg-altitude/20 text-altitude', list: evmAccounts, active: account },
   ];
   /*
    * Wallets never tell websites their own account names, so we number the accounts in the order the
@@ -125,7 +121,7 @@ export default function ConnectWallet() {
                         disabled={isSwitching}
                         title={isActive ? 'Active in your wallet' : 'Switch to this address in your wallet'}
                         className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 text-left disabled:opacity-60 focus-ring"
-                        onClick={() => { if (!isActive) void switchAccount(sec.id, addr); }}
+                        onClick={() => { if (!isActive) void switchAccount(addr); }}
                       >
                         <span className={`h-2 w-2 shrink-0 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-blue-200'}`} />
                         {sec.id === 'evm' && <span className="shrink-0 font-medium text-slate-800">{accountLabel(addr)}</span>}
@@ -142,24 +138,14 @@ export default function ConnectWallet() {
                     </div>
                   );
                 })
-              ) : sec.id === 'evm' ? (
-                <p className="px-2 py-2 text-slate-500">No Ethereum address shared.</p>
-              ) : sec.available ? (
-                <button
-                  className="w-full rounded-lg px-2 py-2 text-left text-horizon hover:bg-blue-50 disabled:opacity-60 focus-ring"
-                  disabled={connectingFamily === sec.id}
-                  onClick={() => void connectFamily(sec.id as NonEvmFamily)}
-                >
-                  {connectingFamily === sec.id ? 'Check your wallet…' : `Connect ${sec.label} account`}
-                </button>
               ) : (
-                <p className="px-2 py-2 text-slate-500">Not available in this wallet yet</p>
+                <p className="px-2 py-2 text-slate-500">No Ethereum address shared.</p>
               )}
             </div>
           ))}
 
           <p className="px-2.5 pb-1 pt-1.5 text-xs leading-relaxed text-slate-500">
-            Click an address to switch it in your wallet. Swaps run on {ACTIVE_CHAIN.name} (Ethereum) only.
+            Click an address to switch it in your wallet. EVM swaps run on {ACTIVE_CHAIN.name} only.
           </p>
           <div className="mt-1 border-t border-blue-100 pt-1">
             <button className="w-full rounded-lg px-3 py-2 text-left text-rose-600 hover:bg-blue-100/70" onClick={() => { void disconnect(); setOpen(false); }}>

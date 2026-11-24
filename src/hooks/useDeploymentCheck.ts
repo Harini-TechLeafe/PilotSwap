@@ -25,9 +25,9 @@ export function useDeploymentCheck(): { checked: boolean; problems: string[] } {
           if (!addr) return;
           try {
             const code = await publicClient.getCode({ address: addr });
-            if (!code || code === '0x') problems.add(`${label} (${addr}) has no contract code on ${ACTIVE_CHAIN.name}. Check the address and VITE_CHAIN_ID.`);
+            if (!code || code === '0x') problems.add(`${label} (${addr}) has no contract code on ${ACTIVE_CHAIN.name}. Check the matching network-prefixed address in .env.`);
           } catch {
-            problems.add('Could not reach the RPC to verify contract addresses. Check VITE_RPC_URL.');
+            problems.add(`Could not reach the ${ACTIVE_CHAIN.name} RPC to verify contract addresses. Check its RPC URL in .env.`);
           }
         }),
       );

@@ -44,3 +44,19 @@ PilotSwap finds direct pools and also routes **token → WETH → token**, so po
 ## Safety notes
 * `MockToken` has an open faucet and an owner mint. It is for testnets only.
 * Never use a mainnet wallet's keys with test tooling. Use a dedicated test account in MetaMask.
+
+---
+
+# Test USDT (Sepolia and BNB Smart Chain Testnet)
+
+PilotSwap lists **USDT** on every network. On the two mainnets it uses the real Tether contract. On the testnets you deploy
+your own test USDT once with `contracts/MockUSDT.sol`:
+
+1. Open https://remix.ethereum.org, create `MockUSDT.sol`, paste `contracts/MockUSDT.sol`, compile (0.8.20+).
+2. *Deploy & Run* → environment *Injected Provider – MetaMask*, with MetaMask on the testnet you are deploying to.
+3. Deploy with the constructor argument **6** (Ethereum Sepolia) or **18** (BNB Smart Chain Testnet).
+4. Copy the deployed address into `.env`: `VITE_SEPOLIA_USDT_ADDRESS=0x…` or `VITE_BSC_TESTNET_USDT_ADDRESS=0x…`, then restart `npm run dev`.
+5. Call `faucet()` on the contract (Remix, or the explorer's *Write Contract* tab) to receive 1,000 test USDT; repeat hourly, or `mint` as owner.
+6. Create the pool in the app: **Liquidity → Add Liquidity → ETH / USDT** (or tBNB / USDT). After that the **Buy USDT** page and the swap card can swap into it.
+
+`MockUSDT` has an open faucet and an owner mint: **never deploy it to a mainnet.**

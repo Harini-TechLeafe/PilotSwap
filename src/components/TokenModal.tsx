@@ -1,9 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { formatUnits } from 'viem';
-import { ACTIVE_CHAIN, explorerAddressUrl } from '../config/chains';
+import { ACTIVE_CHAIN, NATIVE_SYMBOL, explorerAddressUrl } from '../config/chains';
 import { isTokenConfigured, type Token } from '../config/tokens';
 import { useSend } from '../hooks/useSend';
-import { WRONG_NETWORK, useWallet } from '../hooks/useWallet';
+import { useWallet } from '../hooks/useWallet';
 import type { TokenPrice } from '../hooks/usePrices';
 import { formatAmount, formatUsd, parseAmount, sanitizeAmountInput, shortAddress } from '../lib/format';
 import QrCode from './QrCode';
@@ -101,7 +101,7 @@ export default function TokenModal({ token, balances, balancesLoading, refreshBa
           <p className="mt-1 text-sm text-white/85 tabular-nums">
             {!isConnected ? 'Connect your wallet to see your balance'
               : isWrongNetwork ? `Switch to ${ACTIVE_CHAIN.name} to see your balance`
-              : usdValue !== null ? `≈ ${formatUsd(usdValue)}${token.id === 'TBTC' ? ' (at real BTC price, test token)' : ''}` : ' '}
+              : usdValue !== null ? `≈ ${formatUsd(usdValue)}` : ' '}
           </p>
         </div>
 
@@ -138,7 +138,7 @@ export default function TokenModal({ token, balances, balancesLoading, refreshBa
               </div>
             ) : isWrongNetwork ? (
               <div>
-                <p role="alert" className="mb-3 rounded-xl border border-rose-400/30 bg-rose-400/5 p-3 text-sm text-rose-700">{WRONG_NETWORK} ({ACTIVE_CHAIN.name})</p>
+                <p role="status" className="mb-3 rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm text-slate-700">PilotSwap is set to {ACTIVE_CHAIN.name}. Switch your wallet network to continue.</p>
                 <button className="btn-primary" onClick={() => void switchNetwork()}>Switch Network</button>
               </div>
             ) : !configured ? (
@@ -223,10 +223,10 @@ function SendPanel({ token: initial, account, walletClient, balances, refreshBal
               onChange={(e) => s.setAmount(sanitizeAmountInput(e.target.value))}
               className={`min-w-0 flex-1 bg-transparent font-display text-2xl font-semibold outline-none placeholder:text-slate-300 ${over ? 'text-rose-600' : ''}`}
             />
-            <button type="button" onClick={s.setMax} className="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-horizon hover:bg-blue-100/70">MAX</button>
+            <button type="button" onClick={s.setMax} aria-pressed={s.isMax} className={`rounded-lg px-2 py-1 text-xs font-medium transition ${s.isMax ? 'bg-horizon text-white' : 'bg-blue-50 text-horizon hover:bg-blue-100/70'}`}>MAX</button>
             <span className="font-display font-semibold text-slate-600">{token.symbol}</span>
           </div>
-          <p className="mt-1 text-xs text-slate-500">{usd !== null ? `≈ ${formatUsd(usd)}` : token.isNative ? 'MAX keeps 0.002 ETH back for the network fee.' : 'Network fee is paid in ETH.'}</p>
+          <p className="mt-1 text-xs text-slate-500">{usd !== null ? `≈ ${formatUsd(usd)}` : token.isNative ? `MAX keeps 0.002 ${NATIVE_SYMBOL} back for the network fee.` : `Network fee is paid in ${NATIVE_SYMBOL}.`}</p>
         </div>
       </fieldset>
 
@@ -237,7 +237,7 @@ function SendPanel({ token: initial, account, walletClient, balances, refreshBal
           <button type="submit" className="btn-primary" disabled={!!s.blocker}>{s.blocker ?? `Send ${s.amount} ${token.symbol}`}</button>
         )}
       </div>
-      {s.tx && <TransactionStatus tx={s.tx} onDismiss={() => s.setTx(null)} />}
+      {s.tx && <TransactionStatus tx={s.tx} note={s.pendingNote} onDismiss={() => s.setTx(null)} />}
     </form>
   );
 }

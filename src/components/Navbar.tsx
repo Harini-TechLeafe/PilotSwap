@@ -2,25 +2,25 @@
 import ConnectWallet from './ConnectWallet';
 import Logo from './Logo';
 import ChainSelector from './ChainSelector';
-import SolanaConnect from './SolanaConnect';
 import ThemeToggle from './ThemeToggle';
 
-import { useChain } from '../chains/ChainContext';
 import { Link, usePath } from '../lib/router';
 
 const LINKS = [
   { to: '/', label: 'Swap' },
   { to: '/tokens', label: 'Explore Tokens' },
   { to: '/liquidity', label: 'Liquidity' },
+  { to: '/buy-usdt', label: 'Buy USDT' },
 ];
 
 export default function Navbar() {
-  const { chain } = useChain();
   const path = usePath();
 
   const active =
     path === '/liquidity'
       ? '/liquidity'
+      : path === '/buy-usdt'
+        ? '/buy-usdt'
       : path.startsWith('/tokens')
         ? '/tokens'
         : '/';
@@ -77,11 +77,7 @@ export default function Navbar() {
 
             <ChainSelector />
 
-            {chain.family === 'solana' ? (
-              <SolanaConnect />
-            ) : (
-              <ConnectWallet />
-            )}
+            <ConnectWallet />
           </div>
         </div>
 
@@ -107,18 +103,14 @@ export default function Navbar() {
 
             {/* CONNECT WALLET */}
             <div className="min-w-0">
-              {chain.family === 'solana' ? (
-                <SolanaConnect />
-              ) : (
-                <ConnectWallet />
-              )}
+              <ConnectWallet />
             </div>
           </div>
         </div>
       </header>
 
       {/* =========================================
-          MOBILE BOTTOM NAVIGATION - THREE ITEMS
+          MOBILE BOTTOM NAVIGATION - FOUR ITEMS
       ========================================= */}
 
       <nav
@@ -129,7 +121,7 @@ export default function Navbar() {
           right-0
           z-50
           grid
-          grid-cols-3
+          grid-cols-4
           border-t
           border-blue-100
           bg-panel/95
@@ -226,6 +218,34 @@ export default function Navbar() {
           </svg>
 
           <span>Liquidity</span>
+        </Link>
+
+        {/* BUY USDT */}
+        <Link
+          to="/buy-usdt"
+          aria-current={active === '/buy-usdt' ? 'page' : undefined}
+          className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-xs transition focus-ring ${
+            active === '/buy-usdt'
+              ? 'bg-blue-50 text-horizon'
+              : 'text-slate-500 hover:text-cloud'
+          }`}
+        >
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.2 1.7 3 2 3 .8 3 2-1.3 2-3 2c-1.4 0-2.5-.5-3-1.5M12 6.5v11" />
+          </svg>
+
+          <span>Buy USDT</span>
         </Link>
       </nav>
     </>
